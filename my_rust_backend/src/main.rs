@@ -1,39 +1,71 @@
 use axum::{
-    extract::Json,
+    extract::{Json, Extension},
     response::IntoResponse,
     routing::{get, post},
-    Router
+    Router,
+    http::StatusCode,
 };
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
+use std::sync::{Arc, Mutex};
 use std::net::SocketAddr;
 use tower_http::cors::{CorsLayer, AllowOrigin, AllowHeaders, AllowMethods};
-
+use tracing::{info, error, Level};
+use tracing_subscriber::FmtSubscriber;
 
 mod test;
 use test::Person;
+
+type SharedState = Arc<Mutex<Vec<Person>>>;
 
 #[derive(Deserialize)]
 struct InputData {
     input: String,
 }
 
-async fn handle_input(Json(data): Json<InputData>) -> &'static str {
+async fn handle_input(Json(data): Json<InputData>) -> impl IntoResponse {
     println!("Received input: {}", data.input);
     "Input received"
 }
 
 #[tokio::main]
 async fn main() {
-    let cors = CorsLayer::new()
-    .allow_origin(AllowOrigin::any())
-    .allow_methods(AllowMethods::any())
-    .allow_headers(AllowHeaders::any()); 
+    // Initialize logging
+    tracing_subscriber::fmt()
+        .with_max_level(Level::INFO)
+        .init();
 
+    // CORS configuration to allow requests from any origin
+    let cors = CorsLayer::new()
+        .allow_origin(AllowOrigin::any())
+        .allow_methods(AllowMethods::any())
+        .allow_headers(AllowHeaders::any());
+
+    // Shared state with initial data
+    let shared_state = Arc::new(Mutex::new(vec![
+        Person {
+            name: String::from("Person X"),
+            age: 36,
+            favourite_food: Some(String::from("Pizza")),
+        },
+        Person {
+            name: String::from("Person B"),
+            age: 5,
+            favourite_food: Some(String::from("Broccoli")),
+        },
+        Person {
+            name: String::from("Person C"),
+            age: 100,
+            favourite_food: None,
+        },
+    ]));
+
+    // Define routes and apply middleware
     let app = Router::new()
-        .route("/", get(get_people))
+        .route("/", get(root))
         .route("/people", get(get_people))
         .route("/input", post(handle_input))
-        .layer(cors);
+        .layer(cors)
+        .layer(Extension(shared_state));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     println!("listening on {}", addr);
@@ -48,65 +80,17 @@ async fn root() -> &'static str {
     "Hello, World!"
 }
 
-async fn get_people() -> impl IntoResponse {
-    let people = vec![
-        Person {
-            name: String::from("Person A"),
-            age: 36,
-            favourite_food: Some(String::from("Pizza")),
+async fn get_people(
+    Extension(state): Extension<SharedState>,
+) -> impl IntoResponse {
+    match state.lock() {
+        Ok(people) => {
+            info!("Successfully fetched people data");
+            Json(people.clone()).into_response()
         },
-        Person {
-            name: String::from("Person B"),
-            age: 5,
-            favourite_food: Some(String::from("Broccoli")),
-        },
-        Person {
-            name: String::from("Person C"),
-            age: 100,
-            favourite_food: None,
-        },
-    ];
-
-    Json(people)
+        Err(e) => {
+            error!("Failed to acquire lock: {:?}", e);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to acquire lock").into_response()
+        }
+    }
 }
-
-
-//import React, { useEffect, useState } from 'react';
-// function App() {
-//     const [message, setMessage] = useState('');
-//     const [input, setInput] = useState('');
-  
-    
-//     const handleSubmit = async () => {
-//       const response = await fetch('http://localhost:3000/submit', {
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({ input }),
-//       });
-//       const data = await response.json();
-//       console.log(data);
-//     };
-  
-//     useEffect(() => {
-//       fetch('http://localhost:3000/')
-//         .then(response => response.text())
-//         .then(data => setMessage(data))
-//         .catch(console.error);
-//     }, []);
-  
-//     return (
-//       <div>
-//         <input
-//           type="text"
-//           value={input}
-//           onChange={(e) => setInput(e.target.value)}
-//         />
-//         <button onClick={handleSubmit}>Submit</button>
-//       </div>
-//     );
-//   }
-  
-//   export default App;
-  
