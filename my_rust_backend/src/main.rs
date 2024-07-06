@@ -13,9 +13,9 @@ use tracing::{info, error, Level};
 use tracing_subscriber::FmtSubscriber;
 
 mod test;
-use test::Person;
+use test::Novel;
 
-type SharedState = Arc<Mutex<Vec<Person>>>;
+type SharedState = Arc<Mutex<Vec<Novel>>>;
 
 #[derive(Deserialize)]
 struct InputData {
@@ -42,17 +42,17 @@ async fn main() {
 
     // Shared state with initial data
     let shared_state = Arc::new(Mutex::new(vec![
-        Person {
+        Novel {
             name: String::from("Person X"),
             age: 36,
             favourite_food: Some(String::from("Pizza")),
         },
-        Person {
+        Novel {
             name: String::from("Person B"),
             age: 5,
             favourite_food: Some(String::from("Broccoli")),
         },
-        Person {
+        Novel {
             name: String::from("Person C"),
             age: 100,
             favourite_food: None,
@@ -84,9 +84,9 @@ async fn get_people(
     Extension(state): Extension<SharedState>,
 ) -> impl IntoResponse {
     match state.lock() {
-        Ok(people) => {
+        Ok(Novels) => {
             info!("Successfully fetched people data");
-            Json(people.clone()).into_response()
+            Json(Novels.clone()).into_response()
         },
         Err(e) => {
             error!("Failed to acquire lock: {:?}", e);
