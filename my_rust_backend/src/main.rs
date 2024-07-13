@@ -13,6 +13,8 @@ use tracing::{info, error, Level};
 use tracing_subscriber::FmtSubscriber;
 
 mod test;
+mod csv_reader;
+use csv_reader::reading_csv;
 use test::Novel;
 
 type SharedState = Arc<Mutex<Vec<Novel>>>;
@@ -29,6 +31,8 @@ async fn handle_input(Json(data): Json<InputData>) -> impl IntoResponse {
 
 #[tokio::main]
 async fn main() {
+    reading_csv();
+
     // Initialize logging
     tracing_subscriber::fmt()
         .with_max_level(Level::INFO)
@@ -84,9 +88,9 @@ async fn get_people(
     Extension(state): Extension<SharedState>,
 ) -> impl IntoResponse {
     match state.lock() {
-        Ok(Novels) => {
+        Ok(novels) => {
             info!("Successfully fetched people data");
-            Json(Novels.clone()).into_response()
+            Json(novels.clone()).into_response()
         },
         Err(e) => {
             error!("Failed to acquire lock: {:?}", e);
