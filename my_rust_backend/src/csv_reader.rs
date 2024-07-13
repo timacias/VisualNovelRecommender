@@ -55,39 +55,34 @@ pub fn reading_csv(/*novels: vec<Novel>*/) {
                 .parse()
                 .unwrap();
 
-            if v_id == curr_id {
-                languages.push(record.index(1).to_string());
-                titles.push(record.index(3).to_string());
-                latin_titles.push(record.index(4).to_string());
-                continue;
-            } else {
+            if v_id != curr_id {
                 for i in 0..languages.len() {
-                    if !title_to_use.is_empty() {
-                        break;
-                    }
                     if languages[i] == "en" {
                         title_to_use = &*titles[i];
                         break;
                     }
-                    if languages[i] == "ja" {
+                    else if languages[i] = "jp" {
                         title_to_use = &*latin_titles[i];
                         break;
                     }
+
                 }
                 if title_to_use.is_empty() {
-                    // This line panics at v_id 8, I need to find out why, kill me
-                    title_to_use = titles.first().unwrap();
+                    title_to_use = &*titles[0];
                 }
                 println!("{}", title_to_use);
+
                 v_id = curr_id;
                 languages.clear();
                 titles.clear();
                 latin_titles.clear();
                 title_to_use = "";
             }
-            // let row : Row = record.deserialize(Some(&vn_titles_header)).unwrap();
-            // let id = record;
-            // println!("{:?}", record); // Should print out a vector
+
+            languages.push(record.index(1).to_string());
+            titles.push(record.index(3).to_string());
+            latin_titles.push(record.index(4).to_string());
+
         }
 
         // Check to see if the vID of the row matches currID.
