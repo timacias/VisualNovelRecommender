@@ -1,3 +1,4 @@
+id	cat	defaultspoil	searchable	applicable	name	alias	description
 g1	cont	0	f	f	Theme	Story Elements	These tags are for the major and minor [url=http://en.wikipedia.org/wiki/Theme_%28literature%29]themes[/url] or the elements of a game's story that presents themselves in a noticeable way.\n\nThese are what you can call the game is about if they are the major themes of a story. Or maybe the small things you notice in that story that still stand out and add to it in a way.
 g2	cont	0	t	t	Fantasy		This game features elements and themes from the [url=http://en.wikipedia.org/wiki/Fantasy]fantasy[/url] genre.
 g3	cont	0	t	t	ESP	Mental Powers\nPsionic Abilities\nPsychic Powers\nTelepathy	This game features elements and themes related to the [url=http://en.wikipedia.org/wiki/Extrasensory_perception]extrasensory perception[/url] concept.
