@@ -114,7 +114,7 @@ pub fn reading_csv(/*novels: vec<Novel>*/) {
         .delimiter(b'\t')
         .from_reader(staff_file);
 
-    let mut staff_names = Vec::new();
+    let mut staff_names: Vec<String> = Vec::new();
     for name in staff_reader.records(){
         if let record = name.unwrap(){
             let curr_id = record
@@ -133,7 +133,7 @@ pub fn reading_csv(/*novels: vec<Novel>*/) {
                 staff_names.clear();
             }
 
-            let index_str = record.index(1).to_string();  // `parse()` works with `&str` and `String`!
+            let index_str = record.index(1).to_string();
             let index_int = index_str.parse::<usize>().unwrap() - 1;
             let name = names[index_int].clone();
 
@@ -150,5 +150,49 @@ pub fn reading_csv(/*novels: vec<Novel>*/) {
     }
     
     // GETTING SEIYUU NAMES "vn_seiyuu"
+    v_id = 1;
+    let seiyuu_file = File::open("../database/db/vn_seiyuu").unwrap();
+    let mut seiyuu_reader = csv::ReaderBuilder::new()
+        .flexible(true)
+        .delimiter(b'\t')
+        .from_reader(seiyuu_file);
+
+    let mut seiyuu_names: Vec<String>  = Vec::new();
+    for seiyuu_name in seiyuu_reader.records() {
+        if let record = seiyuu_name.unwrap() {
+            let curr_id = record
+                .index(0)[1..]
+                .parse()
+                .unwrap();
+
+            if v_id != curr_id {
+                if seiyuu_names.is_empty(){
+                    seiyuu_names.push("N/A".to_string());
+                }
+                println!("ID: {}, Voice Actors:", v_id);
+                for name in &seiyuu_names {
+                    println!("{}", name);
+                }
+                println!();
+
+                v_id = curr_id;
+                seiyuu_names.clear();
+            }
+
+            let index_str = record.index(1).to_string();
+            let index_int = index_str.parse::<usize>().unwrap() - 1;
+            let name = names[index_int].clone();
+
+            let mut in_list = false;
+            for title in &seiyuu_names {
+                if title == &name {
+                    in_list = true;
+                }
+            }
+            if !in_list && name != "N/A" {
+                seiyuu_names.push(name);
+            }
+        }
+    }
 }
 
