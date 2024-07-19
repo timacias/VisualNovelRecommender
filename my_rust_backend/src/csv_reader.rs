@@ -1,9 +1,8 @@
 use std::fmt::Debug;
 use std::fs::File;
 use std::ops::Index;
-use csv::StringRecord;
-use serde::de::Unexpected::Str;
-use crate::test::Novel;
+use crate::test;
+use test::Novel;
 
 #[derive(serde::Deserialize)]
 struct Row {
@@ -16,8 +15,11 @@ struct Row {
 
 pub fn reading_csv(/*novels: vec<Novel>*/) {
     // TODO: Make the vn object where we just initialize all the other parameters as nothing.
-    // TODO: Make vector of vn objects so that we can implement vn searching.
     // GETTING VISUAL NOVEL TITLE "vn_titles"
+
+    // Make vector of vn objects so that we can implement vn searching.
+    let mut novels: Vec<Novel> = Vec::new();
+
     let vn_file = File::open("../database/db/vn_titles").unwrap();
     let mut vn_reader = csv::ReaderBuilder::new()
         .delimiter(b'\t')
@@ -27,7 +29,7 @@ pub fn reading_csv(/*novels: vec<Novel>*/) {
     let mut languages = Vec::new();
     let mut titles: Vec<String> = Vec::new();
     let mut latin_titles: Vec<String> = Vec::new();
-    let mut title_to_use = "";
+    let mut title_to_use = "".to_string();
 
     for vn in vn_reader.records() {
         if let record = vn.unwrap() {
@@ -39,15 +41,15 @@ pub fn reading_csv(/*novels: vec<Novel>*/) {
             if v_id != curr_id {
                 for i in 0..languages.len() {
                     if languages[i] == "en" {
-                        title_to_use = &*titles[i];
+                        title_to_use = titles[i].clone();
                         break;
                     }
                     else if languages[i] == "ja" {
                         if &*latin_titles[i] == "\\N" {
-                            title_to_use = &*titles[i];
+                            title_to_use = titles[i].clone();
                         }
                         else{
-                            title_to_use = &*latin_titles[i];
+                            title_to_use = latin_titles[i].clone();
                         }
                         break;
                     }
@@ -55,19 +57,23 @@ pub fn reading_csv(/*novels: vec<Novel>*/) {
                 }
                 if title_to_use.is_empty() {
                     if &*latin_titles[0] == "\\N" {
-                        title_to_use = &*titles[0];
+                        title_to_use = titles[0].clone();
                     }
                     else{
-                        title_to_use = &*latin_titles[0];
+                        title_to_use = latin_titles[0].clone();
                     }
                 }
                 // println!("ID: {}, Title: {}", v_id, title_to_use);
+                novels.push(Novel {
+                    v_id,
+                    title : title_to_use
+                });
 
                 v_id = curr_id;
                 languages.clear();
                 titles.clear();
                 latin_titles.clear();
-                title_to_use = "";
+                title_to_use = "".to_string();
             }
 
             languages.push(record.index(1).to_string());
@@ -75,6 +81,11 @@ pub fn reading_csv(/*novels: vec<Novel>*/) {
             latin_titles.push(record.index(4).to_string());
 
         }
+    }
+
+    // Print out the contents of novels
+    for vn in novels {
+        println!("Id: {} | Title: {}", vn.v_id, vn.title);
     }
 
     // GETTING GALL ALIAS TO SEARCH FOR STAFF AND SEIYUU "staff_alias"
@@ -102,9 +113,9 @@ pub fn reading_csv(/*novels: vec<Novel>*/) {
         }
     }
 
-    for i in 0..names.len(){
-        println!("{}: {}", i+1, names[i]);
-    }
+    // for i in 0..names.len(){
+    //     println!("{}: {}", i+1, names[i]);
+    // }
 
     // GETTING STAFF (EXCLUDING SEIYUU) NAMES FOR EACH VN "vn_staff"
     v_id = 1;
@@ -123,11 +134,11 @@ pub fn reading_csv(/*novels: vec<Novel>*/) {
                 .unwrap();
 
             if v_id != curr_id {
-                println!("ID: {}, Staff:", v_id);
-                for name in &staff_names {
-                    println!("{}", name);
-                }
-                println!();
+                // println!("ID: {}, Staff:", v_id);
+                // for name in &staff_names {
+                //     println!("{}", name);
+                // }
+                // println!();
 
                 v_id = curr_id;
                 staff_names.clear();

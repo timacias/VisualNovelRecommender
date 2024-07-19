@@ -46,21 +46,22 @@ async fn main() {
 
     // Shared state with initial data
     let shared_state = Arc::new(Mutex::new(vec![
+        // Tim: I changed the attributes of the Novel struct
         Novel {
-            name: String::from("Person X"),
-            age: 36,
-            favourite_food: Some(String::from("Pizza")),
+            title: String::from("Person X"),
+            v_id: 36,
+            // favourite_food: Some(String::from("Pizza")),
         },
         Novel {
-            name: String::from("Person B"),
-            age: 5,
-            favourite_food: Some(String::from("Broccoli")),
+            title: String::from("Person B"),
+            v_id: 5,
+            // favourite_food: Some(String::from("Broccoli")),
         },
         Novel {
-            name: String::from("Person C"),
-            age: 100,
-            favourite_food: None,
-        },
+            title: String::from("Person C"),
+            v_id: 100,
+            // favourite_food: None,
+        }
     ]));
 
     // Define routes and apply middleware
