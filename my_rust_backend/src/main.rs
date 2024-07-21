@@ -1,3 +1,7 @@
+// Add modules
+mod test;
+mod csv_reader;
+
 use axum::{
     extract::{Json, Extension},
     response::IntoResponse,
@@ -5,15 +9,14 @@ use axum::{
     Router,
     http::StatusCode,
 };
-use serde::{Serialize, Deserialize};
+use serde::{/*Serialize,*/ Deserialize};
 use std::sync::{Arc, Mutex};
 use std::net::SocketAddr;
 use tower_http::cors::{CorsLayer, AllowOrigin, AllowHeaders, AllowMethods};
 use tracing::{info, error, Level};
-use tracing_subscriber::FmtSubscriber;
+// use tracing_subscriber::FmtSubscriber;
 
-mod test;
-mod csv_reader;
+// Import from modules
 use csv_reader::reading_csv;
 use test::Novel;
 
@@ -31,7 +34,8 @@ async fn handle_input(Json(data): Json<InputData>) -> impl IntoResponse {
 
 #[tokio::main]
 async fn main() {
-    reading_csv();
+    // Get a vector of Novels from the vn database
+    let novels = reading_csv();
 
     // Initialize logging
     tracing_subscriber::fmt()
@@ -44,25 +48,27 @@ async fn main() {
         .allow_methods(AllowMethods::any())
         .allow_headers(AllowHeaders::any());
 
+    // TODO: Tim: I changed the attributes of the Novel struct
+    //         try using novels : Vec<Novel> instead.
     // Shared state with initial data
-    let shared_state = Arc::new(Mutex::new(vec![
-        // Tim: I changed the attributes of the Novel struct
-        Novel {
-            title: String::from("Person X"),
-            v_id: 36,
-            // favourite_food: Some(String::from("Pizza")),
-        },
-        Novel {
-            title: String::from("Person B"),
-            v_id: 5,
-            // favourite_food: Some(String::from("Broccoli")),
-        },
-        Novel {
-            title: String::from("Person C"),
-            v_id: 100,
-            // favourite_food: None,
-        }
-    ]));
+    let shared_state = Arc::new(Mutex::new(/*vec![*/
+        novels
+        // Novel {
+        //     title: String::from("Person X"),
+        //     v_id: 36,
+        //     favourite_food: Some(String::from("Pizza")),
+        // },
+        // Novel {
+        //     title: String::from("Person B"),
+        //     v_id: 5,
+        //     favourite_food: Some(String::from("Broccoli")),
+        // },
+        // Novel {
+        //     title: String::from("Person C"),
+        //     v_id: 100,
+        //     favourite_food: None,
+        // }
+    /*]*/));
 
     // Define routes and apply middleware
     let app = Router::new()
