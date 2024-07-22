@@ -9,7 +9,8 @@ pub struct Novel {
     pub title: String,
     pub staff: Vec<String>,
     pub seiyuu: Vec<String>,
-    pub tags: Vec<String>,
+    pub tag_cont: Vec<String>,
+    pub tag_tech: Vec<String>,
     pub nsfw: bool
 }
 

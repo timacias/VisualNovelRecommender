@@ -63,7 +63,8 @@ pub fn reading_csv() -> Vec<Novel> {
                 title : title_to_use,
                 staff: vec![],
                 seiyuu: vec![],
-                tags: vec![],
+                tag_cont: vec![],
+                tag_tech: vec![],
                 nsfw : false
             });
 
@@ -211,6 +212,7 @@ pub fn reading_csv() -> Vec<Novel> {
         .from_reader(tags_file);
 
     let mut tag_names: Vec<String> = vec!["N/A".to_string(); 3918];
+    let mut tag_category: Vec<String> = vec!["N/A".to_string(); 3918];
     for tag in tags_reader.records() {
         let record = tag.unwrap();
 
@@ -219,19 +221,22 @@ pub fn reading_csv() -> Vec<Novel> {
             .parse::<usize>()
             .unwrap();
         tag_names[index_int] = record.index(5).to_string();
+        tag_category[index_int] = record.index(1).to_string();
     }
 
     // MAP TAGS TO NOVELS using "tags_vn" //////////////////////////////////////////////////////////
     // TODO: Implement a check for tag votes?
     // TODO: Check for ero tags
     v_id = 1;
+    let mut v_is_ero: bool = false;
     novels_index = 0usize;
     let tags_vn_file = File::open("../database/db/tags_vn").unwrap();
     let mut tags_vn_reader = csv::ReaderBuilder::new()
         .delimiter(b'\t')
         .from_reader(tags_vn_file);
 
-    let mut tags_vn_names: Vec<String> = Vec::new();
+    let mut tags_vn_cont_names: Vec<String> = Vec::new();
+    let mut tags_vn_tech_names: Vec<String> = Vec::new();
     for name in tags_vn_reader.records() {
         let record = name.unwrap();
         let curr_id = record
@@ -246,8 +251,11 @@ pub fn reading_csv() -> Vec<Novel> {
                 novels_index += 1;
             }
 
-            swap(&mut novels[novels_index].tags, &mut tags_vn_names);
+            swap(&mut novels[novels_index].tag_cont, &mut tags_vn_cont_names);
+            swap(&mut novels[novels_index].tag_tech, &mut tags_vn_tech_names);
+            swap(&mut novels[novels_index].nsfw, &mut v_is_ero);
             v_id = curr_id;
+            v_is_ero = false;
         }
 
         let index_int = record
@@ -255,26 +263,49 @@ pub fn reading_csv() -> Vec<Novel> {
             .parse::<usize>()
             .unwrap();
         let name = tag_names[index_int].clone();
+        let category = tag_category[index_int].clone();
 
         let mut in_list = false;
-        for tag in &tags_vn_names {
-            if tag == &name {
-                in_list = true;
+        if category == "cont" {
+            for tag in &tags_vn_cont_names {
+                if tag == &name {
+                    in_list = true;
+                }
+            }
+        }
+        if category == "tech" {
+            for tag in &tags_vn_tech_names {
+                if tag == &name {
+                    in_list = true;
+                }
             }
         }
         if !in_list && name != "N/A"{
-            tags_vn_names.push(name);
+            if category != "ero" {
+                if category == "cont" {
+                    tags_vn_cont_names.push(name);
+                }
+                else if category == "tech" {
+                    tags_vn_tech_names.push(name);
+                }
+            }
+            else{
+                v_is_ero = true;
+            }
         }
     }
     // Same issue as with staff and seiyuu
-    swap(&mut novels[novels_index + 2].tags, &mut tags_vn_names);
+    swap(&mut novels[novels_index + 2].tag_cont, &mut tags_vn_cont_names);
+    swap(&mut novels[novels_index + 2].tag_tech, &mut tags_vn_tech_names);
+    swap(&mut novels[novels_index + 2].nsfw, &mut v_is_ero);
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Print out the contents of novels
     for vn in &novels {
-        println!("Id: {} | Title: {}\nStaff: {:?}\nSeiyuu: {:?}\nTags: {:?}\n",
-                 vn.v_id, vn.title, vn.staff, vn.seiyuu, vn.tags);
+        println!("Id: {} | Title: {}\nStaff: {:?}\nSeiyuu: {:?}\nContent Tags: {:?}\nTechnical Tags: {:?}\nNSFW?: {:?}\n",
+                 vn.v_id, vn.title, vn.staff, vn.seiyuu, vn.tag_cont, vn.tag_tech, vn.nsfw.to_string());
     }
 
     // After dealing with the horrors of vndb, return the lovely vector of Novels
