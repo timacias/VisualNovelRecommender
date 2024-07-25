@@ -124,6 +124,7 @@ pub fn reading_csv() -> Vec<Novel> {
             }
 
             //println!("I: {}, vid: {}", novels_index, v_id);
+            staff_names.sort_by_key(|name: &String| name.clone());
             swap(&mut novels[novels_index].staff, &mut staff_names);
             v_id = curr_id;
 
@@ -146,6 +147,7 @@ pub fn reading_csv() -> Vec<Novel> {
         }
     }
 
+    staff_names.sort_by_key(|name: &String| name.clone());
     swap(&mut novels[novels_index + 11].staff, &mut staff_names);
     
     // GET SEIYUU NAMES from "vn_seiyuu" ///////////////////////////////////////////////////////////
@@ -172,6 +174,7 @@ pub fn reading_csv() -> Vec<Novel> {
                 novels_index += 1;
             }
 
+            seiyuu_names.sort_by_key(|name: &String| name.clone());
             swap(&mut novels[novels_index].seiyuu, &mut seiyuu_names);
             v_id = curr_id;
         }
@@ -191,6 +194,7 @@ pub fn reading_csv() -> Vec<Novel> {
         }
     }
     // Same issue as above (with vn_staff)
+    seiyuu_names.sort_by_key(|name: &String| name.clone());
     swap(&mut novels[novels_index + 3].seiyuu, &mut seiyuu_names);
 
     // GET LIST OF TAGS from "tags" ////////////////////////////////////////////////////////////////
@@ -236,6 +240,8 @@ pub fn reading_csv() -> Vec<Novel> {
             while novels[novels_index].v_id != v_id {
                 novels_index += 1;
             }
+            tags_vn_cont_names.sort_by_key(|name: &String| name.clone());
+            tags_vn_tech_names.sort_by_key(|name: &String| name.clone());
 
             swap(&mut novels[novels_index].tag_cont, &mut tags_vn_cont_names);
             swap(&mut novels[novels_index].tag_tech, &mut tags_vn_tech_names);
@@ -281,6 +287,9 @@ pub fn reading_csv() -> Vec<Novel> {
         }
     }
     // Same issue as with staff and seiyuu
+    tags_vn_cont_names.sort_by_key(|name: &String| name.clone());
+    tags_vn_tech_names.sort_by_key(|name: &String| name.clone());
+
     swap(&mut novels[novels_index + 2].tag_cont, &mut tags_vn_cont_names);
     swap(&mut novels[novels_index + 2].tag_tech, &mut tags_vn_tech_names);
     swap(&mut novels[novels_index + 2].nsfw, &mut v_is_ero);

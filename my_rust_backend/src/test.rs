@@ -23,45 +23,49 @@ impl Novel{
 }
 
 impl Novel{
-    // The closer to 0 is the more similarities there are
+    // The closer to 1 is the more similarities there are
     pub fn comparing(&self, other_novel: &Novel) -> i32{
-        let mut similarity_index = 250;
-
-        for n in 0..self.staff.len() {
-            for m in 0..other_novel.staff.len(){
-                if self.staff[n] == other_novel.staff[m]{
-                    similarity_index -= 2;
-                    break;
-                }
+        let mut similarity_index = 126;
+        /*  for n in 0..self.staff.len() {
+            if other_novel.staff.contains(&self.staff[n]){
+                similarity_index -= 2;
             }
-        }
-
-        for n in 0..self.seiyuu.len() {
-            for m in 0..other_novel.seiyuu.len(){
-                if self.seiyuu[n] == other_novel.seiyuu[m]{
-                    similarity_index -= 2;
-                    break;
-                }
-            }
-        }
-
-        for n in 0..self.tag_cont.len() {
-            for m in 0..other_novel.tag_cont.len(){
-                if self.tag_cont[n] == other_novel.tag_cont[m]{
-                    similarity_index -= 2;
-                    break;
-                }
-            }
-        }
-
-        for n in 0..self.tag_tech.len() {
-            for m in 0..other_novel.tag_tech.len(){
-                if self.tag_tech[n] == other_novel.tag_tech[m]{
+        } */
+        if self.seiyuu.len() < other_novel.seiyuu.len(){
+            for seiyuu in &self.seiyuu{
+                if other_novel.seiyuu.binary_search(&seiyuu).is_ok(){
                     similarity_index -= 1;
-                    break;
                 }
             }
         }
+        else{
+            for seiyuu in &other_novel.seiyuu{
+                if self.seiyuu.binary_search(&seiyuu).is_ok(){
+                    similarity_index -= 1;
+                }
+            }
+        }
+
+        if self.tag_cont.len() < other_novel.tag_cont.len() {
+            for tag in &self.tag_cont{
+                if other_novel.tag_cont.binary_search(&tag).is_ok(){
+                    similarity_index -= 1;
+                }
+            }
+        }
+        else{
+            for tag in &other_novel.tag_cont{
+                if self.tag_cont.binary_search(&tag).is_ok(){
+                    similarity_index -= 1;
+                }
+            }
+        }
+
+        /*for n in 0..self.tag_tech.len() {
+            if other_novel.tag_tech.contains(&self.tag_tech[n]){
+                similarity_index -= 1;
+            }
+        }*/
         similarity_index
     }
 }

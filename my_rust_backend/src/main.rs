@@ -45,11 +45,24 @@ async fn main() {
         }
     }
 
-    let test_novel1: usize = find_novel(&novels, 11).await; // Fate/Stay Night
+    let mut num_data_points = 0;
+    for novel in &sfw_novels {
+        num_data_points += novel.tag_cont.len();
+    }
+    println!("Number of data points in sfw novels ONLY: {}", num_data_points);
+
+    /* let test_novel1: usize = find_novel(&novels, 11).await; // Fate/Stay Night
     let test_novel2: usize = find_novel(&novels, 50).await; // Fate/Stay Night Ataraxia - Direct Sequel
     novels[test_novel1].print_novel();
     novels[test_novel2].print_novel();
-    println!("{}", novels[test_novel1].comparing(&novels[test_novel2]));
+    println!("{}", novels[test_novel1].comparing(&novels[test_novel2]));*/
+
+    /* let test_novel3: usize = find_novel(&sfw_novels, 971).await;
+    if test_novel3 < sfw_novels.len() {
+        sfw_novels[test_novel3].print_novel();
+    } */
+
+    get_weights(&novels).await;
 
     // Initialize logging
     tracing_subscriber::fmt()
@@ -102,7 +115,7 @@ async fn main() {
 }
 
 async fn root() -> &'static str {
-    "OWO!"
+    "Hello World"
 }
 
 async fn get_people(
@@ -137,4 +150,22 @@ async fn find_novel(vec_novels: &Vec<Novel>, vid: u16) -> usize{
         }
     }
     99999 // This instead of -1 for id not found.
+}
+
+async fn get_weights(novels: &Vec<Novel>){ // TODO: THIS WILL RETURN SOMETHING
+    let mut most_similar_index = 99999;
+    for i in 0..novels.len(){
+        // println!("{}, {}", novels[i].title, novels[i].v_id);
+        for j in i+1..novels.len(){
+            let similarity = novels[i].comparing(&novels[j]);
+            if similarity < most_similar_index {
+                println!("{} ({}) and {} ({}): {}",
+                         novels[i].title, novels[i].v_id, novels[j].title, novels[j].v_id, similarity);
+                most_similar_index = similarity;
+            }
+            /* println!("{}: {} ({}) and {} ({}): {}", i,
+                     novels[i].title, novels[i].v_id, novels[j].title, novels[j].v_id,
+                     novels[i].comparing(&novels[j]));*/ // WILL CAUSE THE PROGRAM TO RUN SLOWER
+        }
+    }
 }
