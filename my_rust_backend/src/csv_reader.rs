@@ -23,8 +23,6 @@ pub fn reading_csv() -> Vec<Novel> {
     let mut latin_titles: Vec<String> = Vec::new();
     let mut title_to_use = "".to_string();
 
-
-    // TODO: Every for-loop that iterates through a csv file skips the final novel, fix needed
     for vn in vn_reader.records() {
         let record = vn.unwrap();
         let curr_id = record
@@ -101,10 +99,6 @@ pub fn reading_csv() -> Vec<Novel> {
         names[index_int] = name;
     }
 
-    // for i in 0..names.len(){
-    //     println!("{}: {}", i+1, names[i]);
-    // }
-
     // GET STAFF (EXCLUDING SEIYUU) NAMES FOR EACH VN from "vn_staff" //////////////////////////////
     v_id = 1;
     let mut novels_index = 0usize;
@@ -123,12 +117,6 @@ pub fn reading_csv() -> Vec<Novel> {
             .unwrap();
 
         if v_id != curr_id {
-            // println!("ID: {}, Staff:", v_id);
-            // for name in &staff_names {
-            //     println!("{}", name);
-            // }
-            // println!();
-
             // v_id does not exactly correlate to the indices of novels
             // This must be accounted for
             while novels[novels_index].v_id != v_id {
@@ -136,6 +124,7 @@ pub fn reading_csv() -> Vec<Novel> {
             }
 
             //println!("I: {}, vid: {}", novels_index, v_id);
+            staff_names.sort_by_key(|name: &String| name.clone());
             swap(&mut novels[novels_index].staff, &mut staff_names);
             v_id = curr_id;
 
@@ -158,6 +147,7 @@ pub fn reading_csv() -> Vec<Novel> {
         }
     }
 
+    staff_names.sort_by_key(|name: &String| name.clone());
     swap(&mut novels[novels_index + 11].staff, &mut staff_names);
     
     // GET SEIYUU NAMES from "vn_seiyuu" ///////////////////////////////////////////////////////////
@@ -184,6 +174,7 @@ pub fn reading_csv() -> Vec<Novel> {
                 novels_index += 1;
             }
 
+            seiyuu_names.sort_by_key(|name: &String| name.clone());
             swap(&mut novels[novels_index].seiyuu, &mut seiyuu_names);
             v_id = curr_id;
         }
@@ -203,6 +194,7 @@ pub fn reading_csv() -> Vec<Novel> {
         }
     }
     // Same issue as above (with vn_staff)
+    seiyuu_names.sort_by_key(|name: &String| name.clone());
     swap(&mut novels[novels_index + 3].seiyuu, &mut seiyuu_names);
 
     // GET LIST OF TAGS from "tags" ////////////////////////////////////////////////////////////////
@@ -225,8 +217,6 @@ pub fn reading_csv() -> Vec<Novel> {
     }
 
     // MAP TAGS TO NOVELS using "tags_vn" //////////////////////////////////////////////////////////
-    // TODO: Implement a check for tag votes?
-    // TODO: Check for ero tags
     v_id = 1;
     let mut v_is_ero: bool = false;
     novels_index = 0usize;
@@ -250,6 +240,8 @@ pub fn reading_csv() -> Vec<Novel> {
             while novels[novels_index].v_id != v_id {
                 novels_index += 1;
             }
+            tags_vn_cont_names.sort_by_key(|name: &String| name.clone());
+            tags_vn_tech_names.sort_by_key(|name: &String| name.clone());
 
             swap(&mut novels[novels_index].tag_cont, &mut tags_vn_cont_names);
             swap(&mut novels[novels_index].tag_tech, &mut tags_vn_tech_names);
@@ -295,18 +287,12 @@ pub fn reading_csv() -> Vec<Novel> {
         }
     }
     // Same issue as with staff and seiyuu
+    tags_vn_cont_names.sort_by_key(|name: &String| name.clone());
+    tags_vn_tech_names.sort_by_key(|name: &String| name.clone());
+
     swap(&mut novels[novels_index + 2].tag_cont, &mut tags_vn_cont_names);
     swap(&mut novels[novels_index + 2].tag_tech, &mut tags_vn_tech_names);
     swap(&mut novels[novels_index + 2].nsfw, &mut v_is_ero);
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // Print out the contents of novels
-    for vn in &novels {
-        println!("Id: {} | Title: {}\nStaff: {:?}\nSeiyuu: {:?}\nContent Tags: {:?}\nTechnical Tags: {:?}\nNSFW?: {:?}\n",
-                 vn.v_id, vn.title, vn.staff, vn.seiyuu, vn.tag_cont, vn.tag_tech, vn.nsfw.to_string());
-    }
 
     // After dealing with the horrors of vndb, return the lovely vector of Novels
     novels

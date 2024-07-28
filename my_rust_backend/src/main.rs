@@ -37,6 +37,33 @@ async fn main() {
     // Get a vector of Novels from the vn database
     let novels = reading_csv();
 
+    // Get a vector of ONLY SFW Novels
+    let mut sfw_novels: Vec<Novel> = Vec::new();
+    for novel in &novels {
+        if !novel.nsfw {
+            sfw_novels.push(novel.clone());
+        }
+    }
+
+    let mut num_data_points = 0;
+    for novel in &sfw_novels {
+        num_data_points += novel.tag_cont.len();
+    }
+    println!("Number of data points in sfw novels ONLY: {}", num_data_points);
+
+    /* let test_novel1: usize = find_novel(&novels, 11).await; // Fate/Stay Night
+    let test_novel2: usize = find_novel(&novels, 50).await; // Fate/Stay Night Ataraxia - Direct Sequel
+    novels[test_novel1].print_novel();
+    novels[test_novel2].print_novel();
+    println!("{}", novels[test_novel1].comparing(&novels[test_novel2]));*/
+
+    /* let test_novel3: usize = find_novel(&sfw_novels, 971).await;
+    if test_novel3 < sfw_novels.len() {
+        sfw_novels[test_novel3].print_novel();
+    } */
+
+    get_weights(&novels).await;
+
     // Initialize logging
     tracing_subscriber::fmt()
         .with_max_level(Level::INFO)
@@ -70,7 +97,7 @@ async fn main() {
         // }
     /*]*/));
 
-    // Define routes and apply middleware
+     // Define routes and apply middleware
     let app = Router::new()
         .route("/", get(root))
         .route("/people", get(get_people))
@@ -88,7 +115,7 @@ async fn main() {
 }
 
 async fn root() -> &'static str {
-    "Hello, World!"
+    "Hello World"
 }
 
 async fn get_people(
@@ -102,6 +129,43 @@ async fn get_people(
         Err(e) => {
             error!("Failed to acquire lock: {:?}", e);
             (StatusCode::INTERNAL_SERVER_ERROR, "Failed to acquire lock").into_response()
+        }
+    }
+}
+
+// Binary Search to find location of novel dependent on vector.
+async fn find_novel(vec_novels: &Vec<Novel>, vid: u16) -> usize{
+    let mut low = 0;
+    let mut high = vec_novels.len();
+    while low <= high {
+        let mid = low + (high - low) / 2;
+        if vec_novels[mid].v_id == vid {
+            return mid;
+        }
+        if vec_novels[mid].v_id < vid {
+            low = mid + 1;
+        }
+        else{
+            high = mid - 1;
+        }
+    }
+    99999 // This instead of -1 for id not found.
+}
+
+async fn get_weights(novels: &Vec<Novel>){ // TODO: THIS WILL RETURN SOMETHING
+    let mut most_similar_index = 99999;
+    for i in 0..novels.len(){
+        // println!("{}, {}", novels[i].title, novels[i].v_id);
+        for j in i+1..novels.len(){
+            let similarity = novels[i].comparing(&novels[j]);
+            if similarity < most_similar_index {
+                println!("{} ({}) and {} ({}): {}",
+                         novels[i].title, novels[i].v_id, novels[j].title, novels[j].v_id, similarity);
+                most_similar_index = similarity;
+            }
+            /* println!("{}: {} ({}) and {} ({}): {}", i,
+                     novels[i].title, novels[i].v_id, novels[j].title, novels[j].v_id,
+                     novels[i].comparing(&novels[j]));*/ // WILL CAUSE THE PROGRAM TO RUN SLOWER
         }
     }
 }
