@@ -41,13 +41,8 @@ async fn main() {
 
 
     let mut num_data_points = 0;
-<<<<<<< HEAD
-    for novel in &sfw_novels {
-        num_data_points += novel.tag_cont.len() + novel.seiyuu.len();
-=======
     for novel in &novels {
         num_data_points += novel.tag_cont.len();
->>>>>>> e9c80e016f8ed6f6f1440565d6c2ca99bcc3c548
     }
     println!("Number of data points in sfw novels ONLY: {}", num_data_points);
 
@@ -62,7 +57,7 @@ async fn main() {
         sfw_novels[test_novel3].print_novel();
     } */
 
-    //let novel_graph = get_weights(&novels).await;
+    let novel_graph = get_weights(&novels).await;
 
     // Initialize logging
     tracing_subscriber::fmt()
