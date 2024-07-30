@@ -2,6 +2,7 @@
 mod test;
 mod csv_reader;
 
+use std::collections::BTreeMap;
 use axum::{
     extract::{Json, Extension},
     response::IntoResponse,
@@ -62,7 +63,7 @@ async fn main() {
         sfw_novels[test_novel3].print_novel();
     } */
 
-    //get_weights(&novels).await;
+    let novel_graph = get_weights(&novels).await;
 
     // Initialize logging
     tracing_subscriber::fmt()
@@ -79,25 +80,25 @@ async fn main() {
     //         try using novels : Vec<Novel> instead.
     // Shared state with initial data
     let shared_state = Arc::new(Mutex::new(/*vec![*/
-        novels
-        // Novel {
-        //     title: String::from("Person X"),
-        //     v_id: 36,
-        //     favourite_food: Some(String::from("Pizza")),
-        // },
-        // Novel {
-        //     title: String::from("Person B"),
-        //     v_id: 5,
-        //     favourite_food: Some(String::from("Broccoli")),
-        // },
-        // Novel {
-        //     title: String::from("Person C"),
-        //     v_id: 100,
-        //     favourite_food: None,
-        // }
-    /*]*/));
+                                           novels
+                                           // Novel {
+                                           //     title: String::from("Person X"),
+                                           //     v_id: 36,
+                                           //     favourite_food: Some(String::from("Pizza")),
+                                           // },
+                                           // Novel {
+                                           //     title: String::from("Person B"),
+                                           //     v_id: 5,
+                                           //     favourite_food: Some(String::from("Broccoli")),
+                                           // },
+                                           // Novel {
+                                           //     title: String::from("Person C"),
+                                           //     v_id: 100,
+                                           //     favourite_food: None,
+                                           // }
+                                           /*]*/));
 
-     // Define routes and apply middleware
+    // Define routes and apply middleware
     let app = Router::new()
         .route("/", get(root))
         .route("/people", get(get_people))
@@ -133,39 +134,17 @@ async fn get_people(
     }
 }
 
-// Binary Search to find location of novel dependent on vector.
-async fn find_novel(vec_novels: &Vec<Novel>, vid: u16) -> usize{
-    let mut low = 0;
-    let mut high = vec_novels.len();
-    while low <= high {
-        let mid = low + (high - low) / 2;
-        if vec_novels[mid].v_id == vid {
-            return mid;
-        }
-        if vec_novels[mid].v_id < vid {
-            low = mid + 1;
-        }
-        else{
-            high = mid - 1;
-        }
-    }
-    99999 // This instead of -1 for id not found.
-}
-
-async fn get_weights(novels: &Vec<Novel>){ // TODO: THIS WILL RETURN SOMETHING
-    let mut most_similar_index = 99999;
-    for i in 0..novels.len(){
+// Returns a TreeMap of <v_id, Vec<v_id, weight>>
+async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u8)>> { // TODO: THIS WILL RETURN SOMETHING
+    let mut graph= BTreeMap::new();
+    for i in 0..novels.len() {
+        let mut adj_list = Vec::new();
         // println!("{}, {}", novels[i].title, novels[i].v_id);
-        for j in i+1..novels.len(){
-            let similarity = novels[i].comparing(&novels[j]);
-            if similarity < most_similar_index {
-                println!("{} ({}) and {} ({}): {}",
-                         novels[i].title, novels[i].v_id, novels[j].title, novels[j].v_id, similarity);
-                most_similar_index = similarity;
-            }
-            /* println!("{}: {} ({}) and {} ({}): {}", i,
-                     novels[i].title, novels[i].v_id, novels[j].title, novels[j].v_id,
-                     novels[i].comparing(&novels[j]));*/ // WILL CAUSE THE PROGRAM TO RUN SLOWER
+        for j in i + 1..novels.len() {
+            adj_list.push((novels[j].v_id,
+                           novels[i].comparing(&novels[j])));
         }
+        graph.insert(novels[i].v_id, adj_list);
     }
+    graph
 }

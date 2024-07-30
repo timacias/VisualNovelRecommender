@@ -1,5 +1,6 @@
 // 'tags_vn' has been sorted based on vid
 
+use std::collections::HashSet;
 // use std::fmt::Debug;
 use std::fs::File;
 use std::mem::swap;
@@ -59,10 +60,8 @@ pub fn reading_csv() -> Vec<Novel> {
             novels.push(Novel {
                 v_id,
                 title : title_to_use,
-                staff: vec![],
-                seiyuu: vec![],
-                tag_cont: vec![],
-                tag_tech: vec![],
+                seiyuu: HashSet::new(),
+                tag_cont: HashSet::new(),
                 nsfw : false
             });
 
@@ -99,67 +98,16 @@ pub fn reading_csv() -> Vec<Novel> {
         names[index_int] = name;
     }
 
-    // GET STAFF (EXCLUDING SEIYUU) NAMES FOR EACH VN from "vn_staff" //////////////////////////////
-    v_id = 1;
-    let mut novels_index = 0usize;
-    let staff_file = File::open("../database/db/vn_staff").unwrap();
-    let mut staff_reader = csv::ReaderBuilder::new()
-        .flexible(true)
-        .delimiter(b'\t')
-        .from_reader(staff_file);
-
-    let mut staff_names = Vec::new();
-    for name in staff_reader.records() {
-        let record = name.unwrap();
-        let curr_id = record
-            .index(0)[1..]
-            .parse()
-            .unwrap();
-
-        if v_id != curr_id {
-            // v_id does not exactly correlate to the indices of novels
-            // This must be accounted for
-            while novels[novels_index].v_id != v_id {
-                novels_index += 1;
-            }
-
-            //println!("I: {}, vid: {}", novels_index, v_id);
-            staff_names.sort_by_key(|name: &String| name.clone());
-            swap(&mut novels[novels_index].staff, &mut staff_names);
-            v_id = curr_id;
-
-            // No need to clear staff_names since it is being swapped with an empty vector
-            // staff_names.clear();
-        }
-
-        let index_str = record.index(1).to_string();  // `parse()` works with `&str` and `String`!
-        let index_int = index_str.parse::<usize>().unwrap();
-        let name = names[index_int].clone();
-
-        let mut in_list = false;
-        for title in &staff_names {
-            if title == &name {
-                in_list = true;
-            }
-        }
-        if !in_list && name != "N/A"{
-            staff_names.push(name);
-        }
-    }
-
-    staff_names.sort_by_key(|name: &String| name.clone());
-    swap(&mut novels[novels_index + 11].staff, &mut staff_names);
-    
     // GET SEIYUU NAMES from "vn_seiyuu" ///////////////////////////////////////////////////////////
     v_id = 1;
-    novels_index = 0usize;
+    let mut novels_index = 0usize;
     let seiyuu_file = File::open("../database/db/vn_seiyuu").unwrap();
     let mut seiyuu_reader = csv::ReaderBuilder::new()
         .flexible(true)
         .delimiter(b'\t')
         .from_reader(seiyuu_file);
 
-    let mut seiyuu_names = Vec::new();
+    let mut seiyuu_names = HashSet::new();
     for name in seiyuu_reader.records() {
         let record = name.unwrap();
         let curr_id = record
@@ -173,8 +121,7 @@ pub fn reading_csv() -> Vec<Novel> {
             while novels[novels_index].v_id != v_id {
                 novels_index += 1;
             }
-
-            seiyuu_names.sort_by_key(|name: &String| name.clone());
+            
             swap(&mut novels[novels_index].seiyuu, &mut seiyuu_names);
             v_id = curr_id;
         }
@@ -190,11 +137,10 @@ pub fn reading_csv() -> Vec<Novel> {
             }
         }
         if !in_list && name != "N/A"{
-            seiyuu_names.push(name);
+            seiyuu_names.insert(name);
         }
     }
-    // Same issue as above (with vn_staff)
-    seiyuu_names.sort_by_key(|name: &String| name.clone());
+    // Same issue as above (fence post problem w/ for-loop)
     swap(&mut novels[novels_index + 3].seiyuu, &mut seiyuu_names);
 
     // GET LIST OF TAGS from "tags" ////////////////////////////////////////////////////////////////
@@ -225,8 +171,7 @@ pub fn reading_csv() -> Vec<Novel> {
         .delimiter(b'\t')
         .from_reader(tags_vn_file);
 
-    let mut tags_vn_cont_names: Vec<String> = Vec::new();
-    let mut tags_vn_tech_names: Vec<String> = Vec::new();
+    let mut tags_vn_cont_names = HashSet::new();
     for name in tags_vn_reader.records() {
         let record = name.unwrap();
         let curr_id = record
@@ -240,11 +185,8 @@ pub fn reading_csv() -> Vec<Novel> {
             while novels[novels_index].v_id != v_id {
                 novels_index += 1;
             }
-            tags_vn_cont_names.sort_by_key(|name: &String| name.clone());
-            tags_vn_tech_names.sort_by_key(|name: &String| name.clone());
 
             swap(&mut novels[novels_index].tag_cont, &mut tags_vn_cont_names);
-            swap(&mut novels[novels_index].tag_tech, &mut tags_vn_tech_names);
             swap(&mut novels[novels_index].nsfw, &mut v_is_ero);
             v_id = curr_id;
             v_is_ero = false;
@@ -265,36 +207,34 @@ pub fn reading_csv() -> Vec<Novel> {
                 }
             }
         }
-        if category == "tech" {
-            for tag in &tags_vn_tech_names {
-                if tag == &name {
-                    in_list = true;
-                }
-            }
-        }
         if !in_list && name != "N/A"{
             if category != "ero" {
                 if category == "cont" {
-                    tags_vn_cont_names.push(name);
-                }
-                else if category == "tech" {
-                    tags_vn_tech_names.push(name);
+                    tags_vn_cont_names.insert(name);
                 }
             }
-            else{
+            else {
                 v_is_ero = true;
             }
         }
     }
     // Same issue as with staff and seiyuu
-    tags_vn_cont_names.sort_by_key(|name: &String| name.clone());
-    tags_vn_tech_names.sort_by_key(|name: &String| name.clone());
-
     swap(&mut novels[novels_index + 2].tag_cont, &mut tags_vn_cont_names);
-    swap(&mut novels[novels_index + 2].tag_tech, &mut tags_vn_tech_names);
     swap(&mut novels[novels_index + 2].nsfw, &mut v_is_ero);
 
-    // After dealing with the horrors of vndb, return the lovely vector of Novels
-    novels
-}
 
+    // Move any sfw Novels into a new vector
+    let mut sfw_novels = Vec::new();
+    for novel in novels {
+        if !novel.nsfw {
+            sfw_novels.push(novel);
+        }
+    }
+
+    for novel in &sfw_novels {
+        println!("{}", novel);
+    }
+    
+    // After dealing with the horrors of vndb, return the lovely vector of Novels
+    sfw_novels
+}
