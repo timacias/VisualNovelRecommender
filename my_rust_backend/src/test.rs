@@ -81,17 +81,24 @@ impl Graph for BTreeMap<u16, Vec<(u16, u8)>> {
         distance[novels.find_novel(source)] = 0;
 
         let mut current_id = source;
-        s.insert(*current_id);
         while !s.contains(terminal) {
             let neighbors: Vec<(u16, u8)> = self[current_id].clone();
-            for node in neighbors{
-                let index = novels.find_novel(&node.0);
+            for node in neighbors {
                 if !s.contains(&node.0) &&
                     distance[novels.find_novel(&node.0)] > (distance[novels.find_novel(&current_id)] + i32::from(node.1)){
+
                     distance[novels.find_novel(&node.0)] = distance[novels.find_novel(&current_id)] + i32::from(node.1);
                     previous[novels.find_novel(&node.0)] = *current_id;
                 }
             }
+            let mut smallest_weight = 99999;
+            for i in 0..distance.len() {
+                if smallest_weight > distance[i] && !s.contains(&novels[i].v_id){
+                    smallest_weight = distance[i];
+                    current_id = &novels[i].v_id;
+                }
+            }
+            s.insert(current_id.clone());
         }
         path
     }

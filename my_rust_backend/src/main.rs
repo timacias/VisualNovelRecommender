@@ -20,6 +20,7 @@ use tracing::{info, error, Level};
 // Import from modules
 use csv_reader::reading_csv;
 use test::Novel;
+use crate::test::FindNovel;
 
 type SharedState = Arc<Mutex<Vec<Novel>>>;
 
@@ -35,20 +36,18 @@ async fn handle_input(Json(data): Json<InputData>) -> impl IntoResponse {
 
 #[tokio::main]
 async fn main() {
-    // Get a vector of Novels from the vn database
+    // Get a vector of ONLY SFW novels
     let novels = reading_csv();
 
-    // Get a vector of ONLY SFW Novels
-    let mut sfw_novels: Vec<Novel> = Vec::new();
-    for novel in &novels {
-        if !novel.nsfw {
-            sfw_novels.push(novel.clone());
-        }
-    }
 
     let mut num_data_points = 0;
+<<<<<<< HEAD
     for novel in &sfw_novels {
         num_data_points += novel.tag_cont.len() + novel.seiyuu.len();
+=======
+    for novel in &novels {
+        num_data_points += novel.tag_cont.len();
+>>>>>>> e9c80e016f8ed6f6f1440565d6c2ca99bcc3c548
     }
     println!("Number of data points in sfw novels ONLY: {}", num_data_points);
 
@@ -139,10 +138,9 @@ async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u8)>> { // 
     let mut graph= BTreeMap::new();
     for i in 0..novels.len() {
         let mut adj_list = Vec::new();
-        // println!("{}, {}", novels[i].title, novels[i].v_id);
+        println!("{}, {}", novels[i].title, novels[i].v_id);
         for j in i + 1..novels.len() {
-            adj_list.push((novels[j].v_id,
-                           novels[i].comparing(&novels[j])));
+            adj_list.push((novels[j].v_id, novels[i].comparing(&novels[j])));
         }
         graph.insert(novels[i].v_id, adj_list);
     }

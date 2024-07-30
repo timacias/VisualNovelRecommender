@@ -171,7 +171,7 @@ pub fn reading_csv() -> Vec<Novel> {
         .delimiter(b'\t')
         .from_reader(tags_vn_file);
 
-    let mut tags_vn_cont_names = HashSet::new();
+    let mut tags_vn_names = HashSet::new();
     for name in tags_vn_reader.records() {
         let record = name.unwrap();
         let curr_id = record
@@ -186,7 +186,7 @@ pub fn reading_csv() -> Vec<Novel> {
                 novels_index += 1;
             }
 
-            swap(&mut novels[novels_index].tag_cont, &mut tags_vn_cont_names);
+            swap(&mut novels[novels_index].tag_cont, &mut tags_vn_names);
             swap(&mut novels[novels_index].nsfw, &mut v_is_ero);
             v_id = curr_id;
             v_is_ero = false;
@@ -200,17 +200,15 @@ pub fn reading_csv() -> Vec<Novel> {
         let category = tag_category[index_int].clone();
 
         let mut in_list = false;
-        if category == "cont" {
-            for tag in &tags_vn_cont_names {
-                if tag == &name {
-                    in_list = true;
-                }
+        for tag in &tags_vn_names {
+            if tag == &name {
+                in_list = true;
             }
         }
-        if !in_list && name != "N/A"{
+        if !in_list && name != "N/A" {
             if category != "ero" {
                 if category == "cont" {
-                    tags_vn_cont_names.insert(name);
+                    tags_vn_names.insert(name);
                 }
             }
             else {
@@ -219,22 +217,21 @@ pub fn reading_csv() -> Vec<Novel> {
         }
     }
     // Same issue as with staff and seiyuu
-    swap(&mut novels[novels_index + 2].tag_cont, &mut tags_vn_cont_names);
+    swap(&mut novels[novels_index + 2].tag_cont, &mut tags_vn_names);
     swap(&mut novels[novels_index + 2].nsfw, &mut v_is_ero);
 
 
     // Move any sfw Novels into a new vector
     let mut sfw_novels = Vec::new();
     for novel in novels {
-        if !novel.nsfw {
+        if !(novel.nsfw || novel.title.to_lowercase().contains("sex")) {
             sfw_novels.push(novel);
         }
     }
 
-    for novel in &sfw_novels {
+    /*for novel in &sfw_novels {
         println!("{}", novel);
-    }
-    
+    }*/
     // After dealing with the horrors of vndb, return the lovely vector of Novels
     sfw_novels
 }
