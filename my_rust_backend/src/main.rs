@@ -63,7 +63,7 @@ async fn main() {
         sfw_novels[test_novel3].print_novel();
     } */
 
-    let novel_graph = get_weights(&novels).await;
+    //let novel_graph = get_weights(&novels).await;
 
     // Initialize logging
     tracing_subscriber::fmt()

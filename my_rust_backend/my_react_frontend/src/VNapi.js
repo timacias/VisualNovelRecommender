@@ -21,10 +21,11 @@ export const queryVisualNovelByTitle = async (title, fields) => {
       });
       return response.data;
     } catch (error) {
-      console.error('Error querying visual novel:', error);
+      console.error('Error getting VN: ', error);
       throw error;
     }
   };
+  
   const VisualNovelSearch = ({ title }) => {
     const [visualNovel, setVisualNovel] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -33,7 +34,7 @@ export const queryVisualNovelByTitle = async (title, fields) => {
     useEffect(() => {
       const fetchData = async () => {
         try {
-          const fields = "title,image.url";
+          const fields = "title,image.url,released,description,rating,image.thumbnail"; //these fields indicate our request to the API.
           const data = await queryVisualNovelByTitle(title, fields);
           if (data.results.length > 0) {
             setVisualNovel(data.results[0]); //use first result
@@ -56,7 +57,13 @@ export const queryVisualNovelByTitle = async (title, fields) => {
     return (
       <div>
         <h1>{visualNovel.title}</h1>
-        {visualNovel.image && <img src={visualNovel.image.url} alt={visualNovel.title} />}
+        <h2>date: {visualNovel.released}</h2>
+        <h3>rating: {visualNovel.rating}</h3>
+        {visualNovel.image && <img src={visualNovel.image.thumbnail} alt={visualNovel.title} />}
+        <h3>description:</h3>
+        <h5>{visualNovel.description}</h5>
+        
+        
       </div>
     );
   };
