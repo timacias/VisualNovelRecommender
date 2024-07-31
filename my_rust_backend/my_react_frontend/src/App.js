@@ -20,23 +20,6 @@ function Search({ handleSearch, input, setInput}) {
   );
 }
 
-
-function SecondSearch({ handleSearch2, input2, setInput2}) {
-  const onChange = (e) => {
-    handleSearch2(e.target.value);
-    setInput2(e.target.value);
-  };
-
-  return (
-    <input
-      type="text"
-      placeholder="Search by name"
-      value={input2}
-      onChange={onChange}
-    />
-  );
-}
-
 function App() {
 
   const [Novel, setNovel] = useState([]);
@@ -64,12 +47,11 @@ function App() {
       })
       .catch(error => console.error('Error fetching data:', error));
 
-      // axios.get('http://localhost:3000/result')
-      // .then(response => {
-      //   setResult(response.data);
-      //   setResult(response.data);
-      // })
-      // .catch(error => console.error('Error fetching data:', error));
+      axios.get('http://localhost:3000/result')
+      .then(response => {
+        setResult(response.data);
+      })
+      .catch(error => console.error('Error fetching data:', error));
 
   }, []);
   
@@ -248,7 +230,13 @@ function App() {
           <VisualNovelSearch title={currentnovel2} />
         </div>
       </div>
-      
+
+      <ul>
+            {Result.map((str, index) => (
+               <p key={index}>{str}</p>
+            ))}
+          </ul>
+
     </div>
   );
 }
