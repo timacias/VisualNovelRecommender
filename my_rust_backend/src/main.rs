@@ -30,6 +30,7 @@ struct InputData {
     input2: String,
     checked: bool,
 }
+
 struct AppState {
     novels: Vec<Novel>,
     result: Vec<String>,
@@ -37,11 +38,19 @@ struct AppState {
 
 
 
-async fn handle_input(Json(data): Json<InputData>) -> impl IntoResponse {
+async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<SharedState>) -> impl IntoResponse {
     println!("Received input: {}", data.input);
     println!("Received input: {}", data.input2);
     println!("Received input: {}", data.checked);
+
+    let mut state = state.lock().unwrap();
+    state.result.clear();
+    state.result.push(data.input.clone());
+    state.result.push(data.input2.clone());
+    state.result.push(data.checked.to_string());
+
     "Input received"
+    
 }
 
 #[tokio::main]
@@ -107,7 +116,7 @@ async fn main() {
 
     clearresult(&shared_state);
     addresult(&shared_state, "test".to_string());
-
+    
 
     // Define routes and apply middleware
     let app = Router::new()
@@ -162,8 +171,6 @@ async fn get_result(
 
     Json(state.result.clone())
 }
-
-
 
 async fn get_people(
     Extension(state): Extension<SharedState>,) -> impl IntoResponse {

@@ -55,7 +55,10 @@ function App() {
 
   }, []);
   
-  
+  function refreshPage() {
+    window.location.reload(false);
+  }
+
   const handlecheck = (event) => {
     setchecked(event.target.checked);
   };
@@ -220,7 +223,7 @@ function App() {
       </label>
       <p>{checked ? "BFS Search" : "Djikstra's Search"}</p>
       <button onClick={handleSubmit}>Send Input</button>
-
+      <button onClick={refreshPage}>Get Results!</button>
       <div class="flexbox-container">
         <div class="module">
           <VisualNovelSearch title={currentnovel1} />
@@ -230,7 +233,7 @@ function App() {
           <VisualNovelSearch title={currentnovel2} />
         </div>
       </div>
-
+    
       <ul>
             {Result.map((str, index) => (
                <p key={index}>{str}</p>
