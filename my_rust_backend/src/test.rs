@@ -71,16 +71,20 @@ pub trait Graph {
 }
 
 // TreeMap of <v_id, Vec<v_id, weight>>
-impl Graph for BTreeMap<u16, Vec<(u16, u8)>> {
+impl Graph for BTreeMap<u16, Vec<(u16, u8)>> { // TODO: Figure out when to stop because the two are part to two different graphs
     fn dijkstra(&self, source : &u16, terminal : &u16, novels : Vec<Novel>) -> Vec<u16> { // Self refers to the map
-        let path = Vec::new();
-        let mut s: HashSet<u16> = HashSet::new(); // Computed id's
+        let mut path: Vec<u16> = Vec::new();
+        if self[source].is_empty() || self[terminal].is_empty(){
+            return path; // Returns an empty if the node is isolated.
+        }
 
-        let mut distance: Vec<i32> = vec![99999; self.len()]; // Distance
-        let mut previous: Vec<u16> = vec![0; self.len()]; // Previous id's. Default set to 0 because no V0 exists
+        let mut s: HashSet<u16> = HashSet::new(); // Computed id's
+        let mut distance: Vec<i32> = vec![99999; novels.len()]; // Distance
+        let mut previous: Vec<u16> = vec![0; novels.len()]; // Previous id's. Default set to 0 because no V0 exists
         distance[novels.find_novel(source)] = 0;
 
         let mut current_id = source;
+        s.insert(*current_id);
         while !s.contains(terminal) {
             let neighbors: Vec<(u16, u8)> = self[current_id].clone();
             for node in neighbors {
@@ -98,7 +102,25 @@ impl Graph for BTreeMap<u16, Vec<(u16, u8)>> {
                     current_id = &novels[i].v_id;
                 }
             }
+            // println!("{}: {}", novels[novels.find_novel(current_id)].v_id, novels[novels.find_novel(current_id)].title);
+            // println!("Smallest Weight: {}\n", smallest_weight);
+
+            if s.contains(current_id){
+                break;
+            }
             s.insert(current_id.clone());
+        }
+
+        current_id = terminal;
+        path.push(*terminal);
+        println!("Distance Needed: {}", distance[novels.find_novel(current_id)]);
+        if s.contains(terminal) && s.contains(source){
+            while current_id != source {
+                // println!("{}: {}", novels[novels.find_novel(current_id)].v_id, novels[novels.find_novel(current_id)].title);
+                // println!("Distance: {}\n", distance[novels.find_novel(current_id)]);
+                current_id = &previous[novels.find_novel(current_id)];
+                path.push(*current_id);
+            }
         }
         path
     }
