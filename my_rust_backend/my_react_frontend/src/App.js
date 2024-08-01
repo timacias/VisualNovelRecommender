@@ -33,10 +33,15 @@ function App() {
   const [currentnovel2, setCurrentnovel2] = useState("Fate");
   const [searchQuery2, setSearchQuery2] = useState("");
   const [nameSearch2, setNameSearch2] = useState([]);
-
+  const [id1, setId1] = useState("");
+  const [id2, setId2] = useState("");
   const [Result, setResult] = useState([]);
+ 
 
   const [checked, setchecked] = useState(false);
+
+ 
+
   const getresults = () => {
     axios.get('http://localhost:3000/result')
     .then(response => {
@@ -104,12 +109,12 @@ function App() {
     }
     setCurrentnovel1(input);
     setCurrentnovel2(input2);
-    console.log("Input1:", input);
-    console.log("Input2:", input2);
-    console.log("Checked:", checked);
+  
     axios.post('http://localhost:3000/input', {
       input: input,
       input2: input2,
+      id1: id1,
+      id2: id2,
       checked: checked
     })
       .then(response => alert('Input was successfully sent to the backend'))
@@ -233,17 +238,24 @@ function App() {
       <button onClick={refreshPage}>Get Results!</button>
       <div class="flexbox-container">
         <div class="module">
-          <VisualNovelSearch title={currentnovel1} check={true}/>
+          <VisualNovelSearch title={currentnovel1} check={true} id = {id1} setId={setId1}/>
         </div>
       
         <div class="module">
-          <VisualNovelSearch title={currentnovel2} check={true}/>
+          <VisualNovelSearch title={currentnovel2} check={true} id = {id2} setId={setId2}/>
         </div>
       </div>
+      <h1>{id1}</h1>
+      <h1>{id2}</h1>
+
     <h2><b>Results!</b></h2>
       <ul>
             {Result.map((str, index) => (
-              <VisualNovelSearch title={str} check={false}/>
+            //   <li key={index}>
+            //   {str}
+            // </li>
+              <VisualNovelSearch title={str} check={false} id = {id1} setId={setId1}/>
+              
               
             ))}
           </ul>
