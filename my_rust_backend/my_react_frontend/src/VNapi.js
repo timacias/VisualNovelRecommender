@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-
+import './VNAPI.css';
 import axios from 'axios';
 
 const API_BASE_URL = 'https://api.vndb.org/kana';
@@ -26,7 +26,7 @@ export const queryVisualNovelByTitle = async (title, fields) => {
     }
   };
   
-  const VisualNovelSearch = ({ title }) => {
+  const VisualNovelSearch = ({ title, check }) => {
     const [visualNovel, setVisualNovel] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -53,19 +53,35 @@ export const queryVisualNovelByTitle = async (title, fields) => {
   
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error: {error}</p>;
-  
-    return (
-      <div>
-        <h1>{visualNovel.title}</h1>
-        <h2>date: {visualNovel.released}</h2>
-        <h3>rating: {visualNovel.rating}</h3>
-        {visualNovel.image && <img src={visualNovel.image.thumbnail} alt={visualNovel.title} />}
-        <h3>description:</h3>
-        <h5>{visualNovel.description}</h5>
-        
+    if(check){
+      return (
+      
+        <div>
+          <h1>{visualNovel.title}</h1>
+          <h2>date: {visualNovel.released}</h2>
+          <h3>rating: {visualNovel.rating}</h3>
+          {visualNovel.image && <img src={visualNovel.image.thumbnail} alt={visualNovel.title} />}
+          <h3>description:</h3>
+          <h5>{visualNovel.description}</h5>
+          
+          
+        </div>
+      );
+    }
+    else{
+      return(
+        <div>
+          <h5>{visualNovel.title}</h5>
+          <h5>date: {visualNovel.released}</h5>
+          <div className='resultmodule'>
+            {visualNovel.image && <img src={visualNovel.image.thumbnail} alt={visualNovel.title} />}
+            <h5>{visualNovel.description}</h5>
+          </div>
         
       </div>
-    );
+      );
+    }
+    
   };
   
   export default VisualNovelSearch;

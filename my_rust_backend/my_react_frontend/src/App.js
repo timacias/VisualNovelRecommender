@@ -37,6 +37,13 @@ function App() {
   const [Result, setResult] = useState([]);
 
   const [checked, setchecked] = useState(false);
+  const getresults = () => {
+    axios.get('http://localhost:3000/result')
+    .then(response => {
+      setResult(response.data);
+    })
+    .catch(error => console.error('Error fetching data:', error));
+}
 
   useEffect(() => {
 
@@ -47,16 +54,13 @@ function App() {
       })
       .catch(error => console.error('Error fetching data:', error));
 
-      axios.get('http://localhost:3000/result')
-      .then(response => {
-        setResult(response.data);
-      })
-      .catch(error => console.error('Error fetching data:', error));
+      
+    getresults();
 
   }, []);
   
   function refreshPage() {
-    window.location.reload(false);
+    getresults();
   }
 
   const handlecheck = (event) => {
@@ -162,15 +166,16 @@ function App() {
           <button onClick={Novelsearch1}>Check Database</button>
           </div>
           <h2>Database Results:</h2>
-         
+          <div class= "holder">
           <List
             height={250}
             itemCount={nameSearch.length}
-            itemSize={25}
-            width={'101%'}
+            itemSize={37}
+            width={'100%'}
           >
             {Column1}
           </List>
+          </div>
           
           {/*<ul>
             {nameSearch.map((Novel, index) => (
@@ -191,15 +196,17 @@ function App() {
           <button onClick={Novelsearch2}>Check Database</button>
           </div>
           <h2>Database Results:</h2>
+          <div class= "holder">
           <List
             height={250}
             itemCount={nameSearch2.length}
-            itemSize={25}
+            itemSize={37}
             width={'100%'}
           >
           
             {Column2}
           </List>
+          </div>
           {/*
           <ul>
             {nameSearch2.map((Novel2, index) => (
@@ -226,17 +233,18 @@ function App() {
       <button onClick={refreshPage}>Get Results!</button>
       <div class="flexbox-container">
         <div class="module">
-          <VisualNovelSearch title={currentnovel1} />
+          <VisualNovelSearch title={currentnovel1} check={true}/>
         </div>
       
         <div class="module">
-          <VisualNovelSearch title={currentnovel2} />
+          <VisualNovelSearch title={currentnovel2} check={true}/>
         </div>
       </div>
-    
+    <h2><b>Results!</b></h2>
       <ul>
             {Result.map((str, index) => (
-               <p key={index}>{str}</p>
+              <VisualNovelSearch title={str} check={false}/>
+              
             ))}
           </ul>
 
