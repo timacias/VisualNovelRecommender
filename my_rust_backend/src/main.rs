@@ -44,8 +44,13 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
     println!("Received input: {}", data.input2);
     println!("Received input: {}", data.checked);
 
+   
+    //do the algorithm here depending on checked
+
     let mut state = state.lock().unwrap();
     state.result.clear();
+
+
     state.result.push(data.input.clone());
     state.result.push(data.input2.clone());
     state.result.push(data.checked.to_string());
@@ -83,19 +88,19 @@ async fn main() {
     let dijkstra_path2 = novel_graph.dijkstra(&(18160u16), &(14908u16), novels.clone());
     // Collar X Malice being compared to Code:Realized -> PATH FOUND BUT THERE ALSO MIGHT BE AN EDGE BETWEEN THE TWO IF WEIGHT > 112
 
-    println!();
-    println!("DIJKSTRA_PATH1");
-    if dijkstra_path1.len() == 1{
-        println!("No path found!!!!");
-        println!();
-    }
-    else {
-        for vertices in dijkstra_path1{
-            println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
-            println!("{}", novels[novels.find_novel(&vertices)]);
-            println!();
-        }
-    }
+    // println!();
+    // println!("DIJKSTRA_PATH1");
+    // if dijkstra_path1.len() == 1{
+    //     println!("No path found!!!!");
+    //     println!();
+    // }
+    // else {
+    //     for vertices in dijkstra_path1{
+    //         println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
+    //         println!("{}", novels[novels.find_novel(&vertices)]);
+    //         println!();
+    //     }
+    // }
 
 
     println!("DIJKSTRA_PATH2");
@@ -109,6 +114,7 @@ async fn main() {
             println!();
         }
     }
+
 
     // Initialize logging
     tracing_subscriber::fmt()
@@ -127,6 +133,7 @@ async fn main() {
 
 
     clearresult(&shared_state);
+
     addresult(&shared_state, "test".to_string());
 
                                           
@@ -198,50 +205,50 @@ async fn get_people(
 
 // Returns a TreeMap of <v_id, Vec<v_id, weight>>
  // TODO: THIS WILL RETURN SOMETHING
-async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u8)>> { // TODO: THIS WILL RETURN SOMETHING
-    let mut graph= BTreeMap::new();
-    for from in 0..novels.len() {
-        println!("{}, {}", novels[from].title, novels[from].v_id);
-        for to in from + 1..novels.len() {
-            // If the current node does not exist in the graph, add it
-            if !graph.contains_key(&novels[from].v_id) {
-                graph.insert(novels[from].v_id, vec![]);
-            }
-            let weight = novels[from].comparing(&novels[to]);
-            // Only add an edge to the graph if two novels have at least one similarity
-            if weight < 126 {
-                // Push the edge to the current node's adjList
-                graph.get_mut(&novels[from].v_id).unwrap().push((novels[to].v_id, weight));
-                // Ensure that the graph is undirected (edges are symmetric for both nodes)
-                // If the other node is not already in the graph, add it
-                if !graph.contains_key(&novels[to].v_id) {
-                    graph.insert(novels[to].v_id, vec![]);
-                }
-                // Now that the other node is in the graph add the current node to its adjList
-                graph.get_mut(&novels[to].v_id).unwrap().push((novels[to].v_id, weight));
-            }
-            // End if
-        }
-        
-    }
-    graph}
-
-
-// async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u8)>> {     // TODO: THIS WILL RETURN SOMETHING
-//     let mut graph: BTreeMap<u16, Vec<(u16,u8)>> = BTreeMap::new();
-//     for from in 0..novels.len(){ // Comparing 'from' novel to every other novel after it.
-//         // println!("{}, {}", novels[from].title, novels[from].v_id);
-//         let mut weights: Vec<(u16, u8)> = vec![];
-//         for to in 0..novels.len(){
-//             if to != from {
-//                 let similarity: u8 = novels[from].comparing(&novels[to]);
-
-//                 if similarity < 112{
-//                     weights.push((novels[to].v_id, similarity));
-//                 }
+// async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u8)>> { // TODO: THIS WILL RETURN SOMETHING
+//     let mut graph= BTreeMap::new();
+//     for from in 0..novels.len() {
+//         println!("{}, {}", novels[from].title, novels[from].v_id);
+//         for to in from + 1..novels.len() {
+//             // If the current node does not exist in the graph, add it
+//             if !graph.contains_key(&novels[from].v_id) {
+//                 graph.insert(novels[from].v_id, vec![]);
 //             }
+//             let weight = novels[from].comparing(&novels[to]);
+//             // Only add an edge to the graph if two novels have at least one similarity
+//             if weight < 126 {
+//                 // Push the edge to the current node's adjList
+//                 graph.get_mut(&novels[from].v_id).unwrap().push((novels[to].v_id, weight));
+//                 // Ensure that the graph is undirected (edges are symmetric for both nodes)
+//                 // If the other node is not already in the graph, add it
+//                 if !graph.contains_key(&novels[to].v_id) {
+//                     graph.insert(novels[to].v_id, vec![]);
+//                 }
+//                 // Now that the other node is in the graph add the current node to its adjList
+//                 graph.get_mut(&novels[to].v_id).unwrap().push((novels[to].v_id, weight));
+//             }
+//             // End if
 //         }
-//         graph.insert(novels[from].v_id, weights.clone());
+        
 //     }
-//     graph
-// }
+//     graph}
+
+
+async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u8)>> {     // TODO: THIS WILL RETURN SOMETHING
+    let mut graph: BTreeMap<u16, Vec<(u16,u8)>> = BTreeMap::new();
+    for from in 0..novels.len(){ // Comparing 'from' novel to every other novel after it.
+        // println!("{}, {}", novels[from].title, novels[from].v_id);
+        let mut weights: Vec<(u16, u8)> = vec![];
+        for to in 0..novels.len(){
+            if to != from {
+                let similarity: u8 = novels[from].comparing(&novels[to]);
+
+                if similarity < 112{
+                    weights.push((novels[to].v_id, similarity));
+                }
+            }
+        }
+        graph.insert(novels[from].v_id, weights.clone());
+    }
+    graph
+}
