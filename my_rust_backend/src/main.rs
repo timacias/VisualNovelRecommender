@@ -44,13 +44,8 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
     println!("Received input: {}", data.input2);
     println!("Received input: {}", data.checked);
 
-   
-    //do the algorithm here depending on checked
-
     let mut state = state.lock().unwrap();
     state.result.clear();
-
-
     state.result.push(data.input.clone());
     state.result.push(data.input2.clone());
     state.result.push(data.checked.to_string());
@@ -73,25 +68,54 @@ async fn main() {
     let novel_graph = get_weights(&novels).await;
 
     let dijkstra_path1 = novel_graph.dijkstra(&(19119u16), &(18160u16), novels.clone());
-    let bellman_path1 = novel_graph.bellman_ford(&(19119u16), &(18160u16), novels.clone());
     // Fate/EXTELLA (v19119) being compared to Collar x Malice (v18160) -> NO PATH FOUND
 
     let dijkstra_path2 = novel_graph.dijkstra(&(18160u16), &(14908u16), novels.clone());
-    let bellman_path2 = novel_graph.bellman_ford(&(18160u16), &(14908u16), novels.clone());
     // Collar X Malice (v18160) being compared to Code:Realize (v14908) -> PATH FOUND BUT THERE ALSO MIGHT BE AN EDGE BETWEEN THE TWO IF WEIGHT > 112
 
     let dijkstra_path3 = novel_graph.dijkstra(&(4602u16), &(30175u16), novels.clone());
-    let bellman_path3 = novel_graph.bellman_ford(&(4602u16), &(30175u16), novels.clone());
     // Utano Prince Sama being compared to B Project Ryuusei Fantasia
 
-    if dijkstra_path1 == bellman_path1 {
-        println!("PATH 1 IS THE SAME");
+    println!();
+    println!("DIJKSTRA_PATH1");
+    if dijkstra_path1.len() == 1{
+        println!("No path found!!!!");
+        println!();
     }
-    if dijkstra_path2 == bellman_path2 {
-        println!("PATH 2 IS THE SAME");
+    else {
+        for vertices in dijkstra_path1{
+            println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
+            println!("{}", novels[novels.find_novel(&vertices)]);
+            println!();
+        }
     }
-    if dijkstra_path3 == bellman_path3 {
-        println!("PATH 3 IS THE SAME");
+
+    println!();
+    println!("DIJKSTRA_PATH2");
+    if dijkstra_path2.len() == 1{
+        println!("No path found!!!!");
+        println!();
+    }
+    else {
+        for vertices in dijkstra_path2{
+            println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
+            println!("{}", novels[novels.find_novel(&vertices)]);
+            println!();
+        }
+    }
+
+    println!();
+    println!("DIJKSTRA_PATH3");
+    if dijkstra_path3.len() == 1{
+        println!("No path found!!!!");
+        println!();
+    }
+    else {
+        for vertices in dijkstra_path3{
+            println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
+            println!("{}", novels[novels.find_novel(&vertices)]);
+            println!();
+        }
     }
 
     // Initialize logging
@@ -111,7 +135,6 @@ async fn main() {
 
 
     clearresult(&shared_state);
-
     addresult(&shared_state, "test".to_string());
 
                                           
