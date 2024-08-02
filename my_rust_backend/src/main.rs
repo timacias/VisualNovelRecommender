@@ -15,7 +15,7 @@ use tower_http::cors::{CorsLayer, AllowOrigin, AllowHeaders, AllowMethods};
 use tracing::{info, error, Level};
 use std::mem::swap;
 // use tracing_subscriber::FmtSubscriber;
-
+use lazy_static::lazy_static;
 // Import from modules
 use csv_reader::reading_csv;
 use test::Novel;
@@ -30,32 +30,65 @@ struct InputData {
     input: String,
     input2: String,
     checked: bool,
+    id1: String,
+    id2: String,
 }
 
 struct AppState {
     novels: Vec<Novel>,
     result: Vec<String>,
+    novel_graph: BTreeMap<u16, Vec<(u16, u8)>>
 }
-
 
 
 async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<SharedState>) -> impl IntoResponse {
     println!("Received input: {}", data.input);
     println!("Received input: {}", data.input2);
     println!("Received input: {}", data.checked);
+    println!("Received input: {}", data.id1);
+    println!("Received input: {}", data.id2);
 
-   
-    //do the algorithm here depending on checked
+    let novelid1 = &data.id1[1..].to_string();
+    let novelid2 = &data.id2[1..].to_string();
+    let intnovelid1: u16 = match novelid1.parse() {
+        Ok(num) => num,
+        Err(e) => {
+            println!("Error parsing novelid1: {}", e);
+            return (StatusCode::BAD_REQUEST, "Invalid id1 format").into_response();
+        }
+    };
+    let intnovelid2: u16 = match novelid2.parse() {
+        Ok(num) => num,
+        Err(e) => {
+            println!("Error parsing novelid2: {}", e);
+            return (StatusCode::BAD_REQUEST, "Invalid id2 format").into_response();
+        }
+    };
+    println!("{}", intnovelid1);
+    println!("{}", intnovelid2);
 
-    let mut state = state.lock().unwrap();
+    
+    let mut state = match state.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => poisoned.into_inner(), 
+    };
+
     state.result.clear();
+    if !data.checked {
+        let dijkstra_path2 = state.novel_graph.dijkstra(&(intnovelid1), &(intnovelid2), state.novels.clone());
+        for vertices in dijkstra_path2 {
+            println!("{}: {}", state.novels[state.novels.find_novel(&vertices)].v_id, state.novels[state.novels.find_novel(&vertices)].title);
+            println!("{}", state.novels[state.novels.find_novel(&vertices)]);
+            println!();
+            let result = state.novels[state.novels.find_novel(&vertices)].title.to_string();
+            println!("{}", result);
+            state.result.push(result);
+        }
+    } else {
+       
+    }
 
-
-    state.result.push(data.input.clone());
-    state.result.push(data.input2.clone());
-    state.result.push(data.checked.to_string());
-
-    "Input received"
+    StatusCode::OK.into_response()
 
 }
 
@@ -82,10 +115,10 @@ async fn main() {
     if test_novel3 < sfw_novels.len() {
         sfw_novels[test_novel3].print_novel();
     } */
-    let dijkstra_path1 = novel_graph.dijkstra(&(19119u16), &(14908u16), novels.clone());
+    //let dijkstra_path1 = novel_graph.dijkstra(&(19119u16), &(14908u16), novels.clone());
     // Fate/EXTELLA being compared to Code:Realize -> NO PATH FOUND
 
-    let dijkstra_path2 = novel_graph.dijkstra(&(18160u16), &(14908u16), novels.clone());
+    //let dijkstra_path2 = novel_graph.dijkstra(&(18160u16), &(14908u16), novels.clone());
     // Collar X Malice being compared to Code:Realized -> PATH FOUND BUT THERE ALSO MIGHT BE AN EDGE BETWEEN THE TWO IF WEIGHT > 112
 
     // println!();
@@ -103,17 +136,17 @@ async fn main() {
     // }
 
 
-    println!("DIJKSTRA_PATH2");
-    if dijkstra_path2.len() == 1{
-        println!("No path found!!!!");
-    }
-    else{
-        for vertices in dijkstra_path2{
-            println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
-            println!("{}", novels[novels.find_novel(&vertices)]);
-            println!();
-        }
-    }
+    // println!("DIJKSTRA_PATH2");
+    // if dijkstra_path2.len() == 1{
+    //     println!("No path found!!!!");
+    // }
+    // else{
+    //     for vertices in dijkstra_path2{
+    //         println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
+    //         println!("{}", novels[novels.find_novel(&vertices)]);
+    //         println!();
+    //     }
+    // }
 
 
     // Initialize logging
@@ -129,7 +162,7 @@ async fn main() {
     // TODO: Tim: I changed the attributes of the Novel struct
     //         try using novels : Vec<Novel> instead.
     // Shared state with initial data
-    let shared_state = Arc::new(Mutex::new(AppState{novels,result: vec![],}));
+    let shared_state = Arc::new(Mutex::new(AppState{novels,result: vec![],novel_graph,}));
 
 
     clearresult(&shared_state);
@@ -180,13 +213,17 @@ fn addresult(shared_state: &SharedState, entry: String) {
 
 async fn get_result( 
     Extension(state): Extension<SharedState>,) -> impl IntoResponse {
-    let mut state = state.lock().unwrap();
+        match state.lock() {
+            Ok(state) => {
+                info!("Successfully fetched result data");
+                Json(state.result.clone()).into_response()
+            },
+            Err(poisoned) => {
+                error!("Failed to acquire lock: {:?}", poisoned);
+                (StatusCode::INTERNAL_SERVER_ERROR, "Failed to acquire lock").into_response()
+            }
+        }
 
-    // resultclear(&mut state);
-    // resultadd(&mut state, String::from("test"));
-
-
-    Json(state.result.clone())
 }
 
 async fn get_people(
@@ -243,7 +280,7 @@ async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u8)>> {    
             if to != from {
                 let similarity: u8 = novels[from].comparing(&novels[to]);
 
-                if similarity < 112{
+                if similarity < 115{
                     weights.push((novels[to].v_id, similarity));
                 }
             }
