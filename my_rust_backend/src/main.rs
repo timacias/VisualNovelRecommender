@@ -15,7 +15,7 @@ use tower_http::cors::{CorsLayer, AllowOrigin, AllowHeaders, AllowMethods};
 use tracing::{info, error, Level};
 use std::mem::swap;
 // use tracing_subscriber::FmtSubscriber;
-
+use lazy_static::lazy_static;
 // Import from modules
 use csv_reader::reading_csv;
 use test::Novel;
@@ -30,11 +30,14 @@ struct InputData {
     input: String,
     input2: String,
     checked: bool,
+    id1: String,
+    id2: String,
 }
 
 struct AppState {
     novels: Vec<Novel>,
     result: Vec<String>,
+    novel_graph: BTreeMap<u16, Vec<(u16, u16)>>
 }
 
 
@@ -43,6 +46,9 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
     println!("Received input: {}", data.input);
     println!("Received input: {}", data.input2);
     println!("Received input: {}", data.checked);
+    println!("Received input: {}", data.id1);
+    println!("Received input: {}", data.id2);
+
 
     let mut state = state.lock().unwrap();
     state.result.clear();
@@ -50,7 +56,47 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
     state.result.push(data.input2.clone());
     state.result.push(data.checked.to_string());
 
-    "Input received"
+    let novelid1 = &data.id1[1..].to_string();
+    let novelid2 = &data.id2[1..].to_string();
+    let intnovelid1: u16 = match novelid1.parse() {
+        Ok(num) => num,
+        Err(e) => {
+            println!("Error parsing novelid1: {}", e);
+            return (StatusCode::BAD_REQUEST, "Invalid id1 format").into_response();
+        }
+    };
+    let intnovelid2: u16 = match novelid2.parse() {
+        Ok(num) => num,
+        Err(e) => {
+            println!("Error parsing novelid2: {}", e);
+            return (StatusCode::BAD_REQUEST, "Invalid id2 format").into_response();
+        }
+    };
+    println!("{}", intnovelid1);
+    println!("{}", intnovelid2);
+
+
+    let mut state = match state.lock() {
+        Ok(guard) => guard,
+        Err(poisoned) => poisoned.into_inner(),
+    };
+
+    state.result.clear();
+    if !data.checked {
+        let dijkstra_path2 = state.novel_graph.dijkstra(&(intnovelid1), &(intnovelid2), state.novels.clone());
+        for vertices in dijkstra_path2 {
+            println!("{}: {}", state.novels[state.novels.find_novel(&vertices)].v_id, state.novels[state.novels.find_novel(&vertices)].title);
+            println!("{}", state.novels[state.novels.find_novel(&vertices)]);
+            println!();
+            let result = state.novels[state.novels.find_novel(&vertices)].title.to_string();
+            println!("{}", result);
+            state.result.push(result);
+        }
+    } else {
+
+    }
+
+    StatusCode::OK.into_response()
 
 }
 
@@ -68,54 +114,25 @@ async fn main() {
     let novel_graph = get_weights(&novels).await;
 
     let dijkstra_path1 = novel_graph.dijkstra(&(19119u16), &(18160u16), novels.clone());
+    let bellman_path1 = novel_graph.bellman_ford(&(19119u16), &(18160u16), novels.clone());
     // Fate/EXTELLA (v19119) being compared to Collar x Malice (v18160) -> NO PATH FOUND
 
     let dijkstra_path2 = novel_graph.dijkstra(&(18160u16), &(14908u16), novels.clone());
+    let bellman_path2 = novel_graph.bellman_ford(&(18160u16), &(14908u16), novels.clone());
     // Collar X Malice (v18160) being compared to Code:Realize (v14908) -> PATH FOUND BUT THERE ALSO MIGHT BE AN EDGE BETWEEN THE TWO IF WEIGHT > 112
 
     let dijkstra_path3 = novel_graph.dijkstra(&(4602u16), &(30175u16), novels.clone());
+    let bellman_path3 = novel_graph.bellman_ford(&(4602u16), &(30175u16), novels.clone());
     // Utano Prince Sama being compared to B Project Ryuusei Fantasia
 
-    println!();
-    println!("DIJKSTRA_PATH1");
-    if dijkstra_path1.len() == 1{
-        println!("No path found!!!!");
-        println!();
+    if dijkstra_path1 == bellman_path1 {
+        println!("PATH 1 IS THE SAME!!!! YAY");
     }
-    else {
-        for vertices in dijkstra_path1{
-            println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
-            println!("{}", novels[novels.find_novel(&vertices)]);
-            println!();
-        }
+    if dijkstra_path2 == bellman_path2 {
+        println!("PATH 2 IS THE SAME!!!! YAY");
     }
-
-    println!();
-    println!("DIJKSTRA_PATH2");
-    if dijkstra_path2.len() == 1{
-        println!("No path found!!!!");
-        println!();
-    }
-    else {
-        for vertices in dijkstra_path2{
-            println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
-            println!("{}", novels[novels.find_novel(&vertices)]);
-            println!();
-        }
-    }
-
-    println!();
-    println!("DIJKSTRA_PATH3");
-    if dijkstra_path3.len() == 1{
-        println!("No path found!!!!");
-        println!();
-    }
-    else {
-        for vertices in dijkstra_path3{
-            println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
-            println!("{}", novels[novels.find_novel(&vertices)]);
-            println!();
-        }
+    if dijkstra_path3 == bellman_path3 {
+        println!("PATH 3 IS THE SAME!!!! YAY");
     }
 
     // Initialize logging
@@ -131,7 +148,7 @@ async fn main() {
     // TODO: Tim: I changed the attributes of the Novel struct
     //         try using novels : Vec<Novel> instead.
     // Shared state with initial data
-    let shared_state = Arc::new(Mutex::new(AppState{novels,result: vec![],}));
+    let shared_state = Arc::new(Mutex::new(AppState{novels,result: vec![],novel_graph,}));
 
 
     clearresult(&shared_state);
@@ -179,15 +196,18 @@ fn addresult(shared_state: &SharedState, entry: String) {
 
 
 
-async fn get_result( 
+async fn get_result(
     Extension(state): Extension<SharedState>,) -> impl IntoResponse {
-    let mut state = state.lock().unwrap();
-
-    // resultclear(&mut state);
-    // resultadd(&mut state, String::from("test"));
-
-
-    Json(state.result.clone())
+    match state.lock() {
+        Ok(state) => {
+            info!("Successfully fetched result data");
+            Json(state.result.clone()).into_response()
+        },
+        Err(poisoned) => {
+            error!("Failed to acquire lock: {:?}", poisoned);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to acquire lock").into_response()
+        }
+    }
 }
 
 async fn get_people(
