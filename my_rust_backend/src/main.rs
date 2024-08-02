@@ -40,8 +40,6 @@ struct AppState {
     novel_graph: BTreeMap<u16, Vec<(u16, u16)>>
 }
 
-
-
 async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<SharedState>) -> impl IntoResponse {
     println!("Received input: {}", data.input);
     println!("Received input: {}", data.input2);
@@ -113,7 +111,7 @@ async fn main() {
 
     let dijkstra_path2 = novel_graph.dijkstra(&(18160u16), &(14908u16), novels.clone());
     let bellman_path2 = novel_graph.bellman_ford(&(18160u16), &(14908u16), novels.clone());
-    // Collar X Malice (v18160) being compared to Code:Realize (v14908) -> PATH FOUND BUT THERE ALSO MIGHT BE AN EDGE BETWEEN THE TWO IF WEIGHT > 112
+    // Collar X Malice (v18160) being compared to Code:Realize (v14908) -> PATH FOUND
 
     let dijkstra_path3 = novel_graph.dijkstra(&(4602u16), &(30175u16), novels.clone());
     let bellman_path3 = novel_graph.bellman_ford(&(4602u16), &(30175u16), novels.clone());
