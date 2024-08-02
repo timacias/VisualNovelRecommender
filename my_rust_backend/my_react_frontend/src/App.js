@@ -149,6 +149,7 @@ function App() {
     <div style={style}>
       <div className={index % 2 ? 'list1' : 'list2'}>
         <b>Name:</b> {nameSearch2[index].title + ' '}
+        <b>ID:</b> {nameSearch2[index].v_id + ' '}
         <b>Tags:</b> {Array.from(nameSearch2[index].tag_cont).slice(0, 3).join(', ')}
       </div>
     </div>
@@ -159,9 +160,10 @@ function App() {
     <div className="App">
       <h2>Note: our database for Novels is not including NSFW and r18 tags, our database is from the June 24, 2024 VNDB</h2>
       <h3>Because the VNDB is an ongoing database that includes realy old novels and novels that are in progress, some information such as date, rating, image, or description may not be available</h3>
+      <h3>due to this there are a lot of islands and unreachable novels</h3>
       <h3>Some NSFW novels may slip through due to lack of proper nsfw tag documentation from the vndb</h3>
       <h3>our lists only display the top 3 tags in a novel for visual clarity, but we use all of the tags in calculation</h3>
-      <h3>Graph edges is based on similarity score</h3>
+      <h3>Graph edges is based on similarity score, we only create an edge if a certain similarity score is met</h3>
 
       <div class="flexbox-container">
         <div class="module">
@@ -250,14 +252,14 @@ function App() {
 
     <h2><b>Results!</b></h2>
       <ul>
-            {Result.map((str, index) => (
-            //   <li key={index}>
-            //   {str}
-            // </li>
-              <VisualNovelSearch title={str} check={false} id = {id1} setId={setId1}/>
-              
-              
-            ))}
+      {Result.length < 2 ? (
+        <p>No path</p>
+      ) : (
+        Result.map((str, index) => (
+          <VisualNovelSearch title={str} check={false} id = {id1} setId={setId1}/>
+        ))
+      )}
+      
           </ul>
 
     </div>
