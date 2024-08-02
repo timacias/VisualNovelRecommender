@@ -61,6 +61,7 @@ pub fn reading_csv() -> Vec<Novel> {
                 v_id,
                 title : title_to_use,
                 seiyuu: HashSet::new(),
+                staff: HashSet::new(),
                 tag_cont: HashSet::new(),
                 nsfw : false
             });
@@ -130,18 +131,51 @@ pub fn reading_csv() -> Vec<Novel> {
         let index_int = index_str.parse::<usize>().unwrap();
         let name = names[index_int].clone();
 
-        let mut in_list = false;
-        for title in &seiyuu_names {
-            if title == &name {
-                in_list = true;
-            }
-        }
-        if !in_list && name != "N/A"{
+        if !seiyuu_names.contains(&name) && name != "N/A"{
             seiyuu_names.insert(name);
         }
     }
     // Same issue as above (fence post problem w/ for-loop)
-    swap(&mut novels[novels_index + 3].seiyuu, &mut seiyuu_names);
+    swap(&mut novels[novels_index + 2].seiyuu, &mut seiyuu_names);
+
+    // GET STAFF NAMES from "vn_staff" ///////////////////////////////////////////////////////////
+    v_id = 1;
+    let mut novels_index = 0usize;
+    let staff_file = File::open("../database/db/vn_staff").unwrap();
+    let mut staff_reader = csv::ReaderBuilder::new()
+        .flexible(true)
+        .delimiter(b'\t')
+        .from_reader(staff_file);
+
+    let mut staff_names = HashSet::new();
+    for name in staff_reader.records() {
+        let record = name.unwrap();
+        let curr_id = record
+            .index(0)[1..]
+            .parse()
+            .unwrap();
+
+        if v_id != curr_id {
+            // v_id does not exactly correlate to the indices of novels
+            // This must be accounted for
+            while novels[novels_index].v_id != v_id {
+                novels_index += 1;
+            }
+
+            swap(&mut novels[novels_index].staff, &mut staff_names);
+            v_id = curr_id;
+        }
+
+        let index_str = record.index(1).to_string();  // `parse()` works with `&str` and `String`!
+        let index_int = index_str.parse::<usize>().unwrap();
+        let name = names[index_int].clone();
+
+        if !staff_names.contains(&name) && name != "N/A"{
+            staff_names.insert(name);
+        }
+    }
+    // Same issue as above (fence post problem w/ for-loop)
+    swap(&mut novels[novels_index + 2].staff, &mut staff_names);
 
     // GET LIST OF TAGS from "tags" ////////////////////////////////////////////////////////////////
     let tags_file = File::open("../database/db/tags").unwrap();
@@ -171,7 +205,7 @@ pub fn reading_csv() -> Vec<Novel> {
         .delimiter(b'\t')
         .from_reader(tags_vn_file);
 
-    let mut tags_vn_names = HashSet::new();
+    let mut tags_vn_cont_names = HashSet::new();
     for name in tags_vn_reader.records() {
         let record = name.unwrap();
         let curr_id = record
@@ -186,7 +220,7 @@ pub fn reading_csv() -> Vec<Novel> {
                 novels_index += 1;
             }
 
-            swap(&mut novels[novels_index].tag_cont, &mut tags_vn_names);
+            swap(&mut novels[novels_index].tag_cont, &mut tags_vn_cont_names);
             swap(&mut novels[novels_index].nsfw, &mut v_is_ero);
             v_id = curr_id;
             v_is_ero = false;
@@ -199,16 +233,10 @@ pub fn reading_csv() -> Vec<Novel> {
         let name = tag_names[index_int].clone();
         let category = tag_category[index_int].clone();
 
-        let mut in_list = false;
-        for tag in &tags_vn_names {
-            if tag == &name {
-                in_list = true;
-            }
-        }
-        if !in_list && name != "N/A" {
+        if !tags_vn_cont_names.contains(&name) && name != "N/A" && record.index(4).parse::<i8>().unwrap() > 1 {
             if category != "ero" {
                 if category == "cont" {
-                    tags_vn_names.insert(name);
+                    tags_vn_cont_names.insert(name);
                 }
             }
             else {
@@ -216,8 +244,8 @@ pub fn reading_csv() -> Vec<Novel> {
             }
         }
     }
-    // Same issue as with staff and seiyuu
-    swap(&mut novels[novels_index + 2].tag_cont, &mut tags_vn_names);
+    // Same issue as with seiyuu
+    swap(&mut novels[novels_index + 2].tag_cont, &mut tags_vn_cont_names);
     swap(&mut novels[novels_index + 2].nsfw, &mut v_is_ero);
 
 

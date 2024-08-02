@@ -11,31 +11,52 @@ pub struct Novel {
     pub v_id: u16,
     pub title: String,
     pub seiyuu: HashSet<String>,
+    pub staff: HashSet<String>,
     pub tag_cont: HashSet<String>,
     pub nsfw: bool
 }
 
 impl Display for Novel {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Id: {} | Title: {}\nVoice Actors: {:?}\nContent Tags: {:?}\nNSFW?: {:?}\n",
-                 self.v_id, self.title, self.seiyuu, self.tag_cont, self.nsfw.to_string())
+        write!(f, "Id: {} | Title: {}\nVoice Actors: {:?}\nStaff: {:?}\nContent Tags: {:?}\nNSFW?: {:?}\n",
+                 self.v_id, self.title, self.seiyuu, self.staff, self.tag_cont, self.nsfw.to_string())
     }
 }
 
 impl Novel {
     // The closer to 1 is the more similarities there are
-    pub fn comparing(&self, other_novel: &Novel) -> u8 {
-        let similarity_index = 126;
+    pub fn comparing(&self, other_novel: &Novel) -> u16 {
+        let mut intersection_index: f32 = self.seiyuu.intersection(&other_novel.seiyuu).count() as f32;
+        intersection_index += self.tag_cont.intersection(&other_novel.tag_cont).count() as f32;
+        intersection_index += self.staff.intersection(&other_novel.staff).count() as f32;
 
-        let mut intersection_index = self.seiyuu.intersection(&other_novel.seiyuu).count();
-        intersection_index += self.tag_cont.intersection(&other_novel.tag_cont).count();
-
-        let return_val = similarity_index - intersection_index;
-        if return_val <= 0 {
-            panic!("Edge weight is zero or less!")
+        let mut smallest_sizes: f32 = 0.0;
+        if self.seiyuu.len() < other_novel.seiyuu.len() {
+            smallest_sizes += self.seiyuu.len() as f32;
+        }
+        else{
+            smallest_sizes +=other_novel.seiyuu.len() as f32;
         }
 
-        return_val as u8
+        if self.staff.len() < other_novel.staff.len() {
+            smallest_sizes += self.staff.len() as f32;
+        }
+        else{
+            smallest_sizes += other_novel.staff.len() as f32;
+        }
+
+        if self.tag_cont.len() < other_novel.tag_cont.len() {
+            smallest_sizes += self.tag_cont.len() as f32;
+        }
+        else{
+            smallest_sizes += other_novel.tag_cont.len() as f32;
+        }
+
+        if smallest_sizes == 0.0 {
+            return 0;
+        }
+        // (smallest_sizes/intersection_index) as u16
+        (100.0 - ((intersection_index/smallest_sizes) * 100.0)) as u16
     }
 }
 
@@ -71,10 +92,11 @@ pub trait Graph {
 }
 
 // TreeMap of <v_id, Vec<v_id, weight>>
-impl Graph for BTreeMap<u16, Vec<(u16, u8)>> { // TODO: Figure out when to stop because the two are part to two different graphs
+impl Graph for BTreeMap<u16, Vec<(u16, u16)>> { // TODO: Figure out when to stop because the two are part to two different graphs
     fn dijkstra(&self, source : &u16, terminal : &u16, novels : Vec<Novel>) -> Vec<u16> { // Self refers to the map
         let mut path: Vec<u16> = Vec::new();
         if self[source].is_empty() || self[terminal].is_empty(){
+            println!("EITHER SOURCE OR TERMINAL NOVEL HAS NO EDGE");
             return path; // Returns an empty if the node is isolated.
         }
 
@@ -86,8 +108,9 @@ impl Graph for BTreeMap<u16, Vec<(u16, u8)>> { // TODO: Figure out when to stop 
         let mut current_id = source;
         s.insert(*current_id);
         while !s.contains(terminal) {
-            let neighbors: Vec<(u16, u8)> = self[current_id].clone();
+            let neighbors: Vec<(u16, u16)> = self[current_id].clone();
             for node in neighbors {
+                // If the node hasn't been visited yet and the weight of the new path is cheaper than originally, relax that vertex
                 if !s.contains(&node.0) &&
                     distance[novels.find_novel(&node.0)] > (distance[novels.find_novel(&current_id)] + i32::from(node.1)){
 
@@ -95,6 +118,8 @@ impl Graph for BTreeMap<u16, Vec<(u16, u8)>> { // TODO: Figure out when to stop 
                     previous[novels.find_novel(&node.0)] = *current_id;
                 }
             }
+
+            // Determine next vertex to visit by which has the smallest value in d[v]
             let mut smallest_weight = 99999;
             for i in 0..distance.len() {
                 if smallest_weight > distance[i] && !s.contains(&novels[i].v_id){
@@ -105,6 +130,7 @@ impl Graph for BTreeMap<u16, Vec<(u16, u8)>> { // TODO: Figure out when to stop 
             // println!("{}: {}", novels[novels.find_novel(current_id)].v_id, novels[novels.find_novel(current_id)].title);
             // println!("Smallest Weight: {}\n", smallest_weight);
 
+            // If no change has occurred, the terminal vertex is disconnected from source and sense no path exists.
             if s.contains(current_id){
                 break;
             }
