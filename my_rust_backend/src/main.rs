@@ -48,6 +48,13 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
     println!("Received input: {}", data.id1);
     println!("Received input: {}", data.id2);
 
+
+    let mut state = state.lock().unwrap();
+    state.result.clear();
+    state.result.push(data.input.clone());
+    state.result.push(data.input2.clone());
+    state.result.push(data.checked.to_string());
+
     let novelid1 = &data.id1[1..].to_string();
     let novelid2 = &data.id2[1..].to_string();
     let intnovelid1: u16 = match novelid1.parse() {
@@ -97,57 +104,67 @@ async fn main() {
     // Get a vector of ONLY SFW novels
     let novels = reading_csv();
 
-
     let mut num_data_points = 0;
     for novel in &novels {
-        num_data_points += novel.tag_cont.len() + novel.seiyuu.len();
+        num_data_points += novel.tag_cont.len() + novel.seiyuu.len() + novel.staff.len();
     }
     println!("Number of data points in sfw novels ONLY: {}", num_data_points);
 
-    /* let test_novel1: usize = find_novel(&novels, 11).await; // Fate/Stay Night
-    let test_novel2: usize = find_novel(&novels, 50).await; // Fate/Stay Night Ataraxia - Direct Sequel
-    novels[test_novel1].print_novel();
-    novels[test_novel2].print_novel();
-    println!("{}", novels[test_novel1].comparing(&novels[test_novel2]));*/
     let novel_graph = get_weights(&novels).await;
 
-    /* let test_novel3: usize = find_novel(&sfw_novels, 971).await;
-    if test_novel3 < sfw_novels.len() {
-        sfw_novels[test_novel3].print_novel();
-    } */
-    //let dijkstra_path1 = novel_graph.dijkstra(&(19119u16), &(14908u16), novels.clone());
+    let dijkstra_path1 = novel_graph.dijkstra(&(19119u16), &(18160u16), novels.clone());
+    // Fate/EXTELLA (v19119) being compared to Collar x Malice (v18160) -> NO PATH FOUND
+
+    let dijkstra_path2 = novel_graph.dijkstra(&(18160u16), &(14908u16), novels.clone());
+    // Collar X Malice (v18160) being compared to Code:Realize (v14908) -> PATH FOUND BUT THERE ALSO MIGHT BE AN EDGE BETWEEN THE TWO IF WEIGHT > 112
+  
+     let dijkstra_path3 = novel_graph.dijkstra(&(4602u16), &(30175u16), novels.clone());
+    // Utano Prince Sama being compared to B Project Ryuusei Fantasia
+    
+    let dijkstra_path4 = novel_graph.dijkstra(&(19119u16), &(14908u16), novels.clone());
     // Fate/EXTELLA being compared to Code:Realize -> NO PATH FOUND
 
-    //let dijkstra_path2 = novel_graph.dijkstra(&(18160u16), &(14908u16), novels.clone());
-    // Collar X Malice being compared to Code:Realized -> PATH FOUND BUT THERE ALSO MIGHT BE AN EDGE BETWEEN THE TWO IF WEIGHT > 112
+    println!();
+    println!("DIJKSTRA_PATH1");
+    if dijkstra_path1.len() == 1{
+        println!("No path found!!!!");
+        println!();
+    }
+    else {
+        for vertices in dijkstra_path1{
+            println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
+            println!("{}", novels[novels.find_novel(&vertices)]);
+            println!();
+        }
+    }
 
-    // println!();
-    // println!("DIJKSTRA_PATH1");
-    // if dijkstra_path1.len() == 1{
-    //     println!("No path found!!!!");
-    //     println!();
-    // }
-    // else {
-    //     for vertices in dijkstra_path1{
-    //         println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
-    //         println!("{}", novels[novels.find_novel(&vertices)]);
-    //         println!();
-    //     }
-    // }
+    println!();
+    println!("DIJKSTRA_PATH2");
+    if dijkstra_path2.len() == 1{
+        println!("No path found!!!!");
+        println!();
+    }
+    else {
+        for vertices in dijkstra_path2{
+            println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
+            println!("{}", novels[novels.find_novel(&vertices)]);
+            println!();
+        }
+    }
 
-
-    // println!("DIJKSTRA_PATH2");
-    // if dijkstra_path2.len() == 1{
-    //     println!("No path found!!!!");
-    // }
-    // else{
-    //     for vertices in dijkstra_path2{
-    //         println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
-    //         println!("{}", novels[novels.find_novel(&vertices)]);
-    //         println!();
-    //     }
-    // }
-
+    println!();
+    println!("DIJKSTRA_PATH3");
+    if dijkstra_path3.len() == 1{
+        println!("No path found!!!!");
+        println!();
+    }
+    else {
+        for vertices in dijkstra_path3{
+            println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
+            println!("{}", novels[novels.find_novel(&vertices)]);
+            println!();
+        }
+    }
 
     // Initialize logging
     tracing_subscriber::fmt()
@@ -166,7 +183,6 @@ async fn main() {
 
 
     clearresult(&shared_state);
-
     addresult(&shared_state, "test".to_string());
 
                                           
@@ -266,26 +282,34 @@ async fn get_people(
 //             }
 //             // End if
 //         }
-        
+//       }
 //     }
 //     graph}
 
 
-async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u8)>> {     // TODO: THIS WILL RETURN SOMETHING
-    let mut graph: BTreeMap<u16, Vec<(u16,u8)>> = BTreeMap::new();
-    for from in 0..novels.len(){ // Comparing 'from' novel to every other novel after it.
-        // println!("{}, {}", novels[from].title, novels[from].v_id);
-        let mut weights: Vec<(u16, u8)> = vec![];
-        for to in 0..novels.len(){
-            if to != from {
-                let similarity: u8 = novels[from].comparing(&novels[to]);
+async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u16)>> {
+     let mut graph: BTreeMap<u16, Vec<(u16,u16)>> = BTreeMap::new();
+     let mut num_edges: u32 = 0;
+     for from in 0..novels.len(){ // Comparing 'from' novel to every other novel after it.
+         println!("{}, {}", novels[from].title, novels[from].v_id);
+         let curr_num_edge = num_edges;
+         let mut weights: Vec<(u16, u16)> = vec![];
+         for to in 0..novels.len(){
+             if to != from {
+                 let similarity: u16 = novels[from].comparing(&novels[to]);
 
-                if similarity < 115{
-                    weights.push((novels[to].v_id, similarity));
-                }
-            }
-        }
-        graph.insert(novels[from].v_id, weights.clone());
-    }
+                 if similarity > 0  && similarity < 70 {
+                     weights.push((novels[to].v_id, similarity));
+                     num_edges += 1;
+                 }
+             }
+         }
+         if num_edges - curr_num_edge == 0 {
+             println!("NO EDGED ADDED")
+         }
+         graph.insert(novels[from].v_id, weights.clone());
+         println!();
+     }
+    println!("NUM EDGES: {}", num_edges);
     graph
 }
