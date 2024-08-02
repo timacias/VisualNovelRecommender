@@ -42,6 +42,10 @@
 }
 .list2{
   background: #7cb5c4;
+
+}
+.holder{
+  background: #5e97a7;
 }
 @keyframes App-logo-spin {
   from {
