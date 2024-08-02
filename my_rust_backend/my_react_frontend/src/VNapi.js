@@ -26,18 +26,21 @@ export const queryVisualNovelByTitle = async (title, fields) => {
     }
   };
   
-  const VisualNovelSearch = ({ title, check }) => {
+  const VisualNovelSearch = ({ title, check, id, setId }) => {
     const [visualNovel, setVisualNovel] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [idata, setIddata] = useState("");
+   
   
     useEffect(() => {
       const fetchData = async () => {
         try {
-          const fields = "title,image.url,released,description,rating,image.thumbnail"; //these fields indicate our request to the API.
+          const fields = "title,image.url,released,description,rating,image.thumbnail,id"; //these fields indicate our request to the API.
           const data = await queryVisualNovelByTitle(title, fields);
           if (data.results.length > 0) {
             setVisualNovel(data.results[0]); //use first result
+            setId(data.results[0].id.toString());
           } else {
             setError('Visual novel not found');
           }
@@ -47,7 +50,7 @@ export const queryVisualNovelByTitle = async (title, fields) => {
           setLoading(false);
         }
       };
-  
+      
       fetchData();
     }, [title]);
   
@@ -55,7 +58,6 @@ export const queryVisualNovelByTitle = async (title, fields) => {
     if (error) return <p>Error: {error}</p>;
     if(check){
       return (
-      
         <div>
           <h1>{visualNovel.title}</h1>
           <h2>date: {visualNovel.released}</h2>
@@ -63,6 +65,7 @@ export const queryVisualNovelByTitle = async (title, fields) => {
           {visualNovel.image && <img src={visualNovel.image.thumbnail} alt={visualNovel.title} />}
           <h3>description:</h3>
           <h5>{visualNovel.description}</h5>
+          
           
           
         </div>
