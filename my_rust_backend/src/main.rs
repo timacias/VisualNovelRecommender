@@ -75,12 +75,6 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
     println!("{}", intnovelid1);
     println!("{}", intnovelid2);
 
-
-    let mut state = match state.lock() {
-        Ok(guard) => guard,
-        Err(poisoned) => poisoned.into_inner(),
-    };
-
     state.result.clear();
     if !data.checked {
         let dijkstra_path2 = state.novel_graph.dijkstra(&(intnovelid1), &(intnovelid2), state.novels.clone());
