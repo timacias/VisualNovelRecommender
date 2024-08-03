@@ -253,14 +253,31 @@ pub fn reading_csv() -> (Vec<Novel>, HashMap<String, u16>) {
     swap(&mut novels[novels_index + 2].nsfw, &mut v_is_ero);
 
 
-   // Move any sfw Novels into a new vector
-   let mut sfw_novels = Vec::new();
-   for novel in novels {
-       // Ensure that novels are SFW and that their titles have no flagged words
-       if !novel.nsfw && !novel.title.to_lowercase().contains("sex") {
-           sfw_novels.push(novel);
-       }
-   }
+  // A vector containing a string of flagged words
+  let illegal_titles = [String::from_utf8(vec![0x73, 0x65, 0x78]).unwrap(),
+    String::from_utf8(vec![0x66, 0x75, 0x63, 0x6b]).unwrap(),
+    String::from_utf8(vec![0x69, 0x6e, 0x63, 0x65, 0x73, 0x74]).unwrap(),
+    String::from_utf8(vec![0x62, 0x6f, 0x6f, 0x62]).unwrap(),
+    String::from_utf8(vec![0x70, 0x75, 0x73, 0x73, 0x79]).unwrap(),
+    String::from_utf8(vec![0x68, 0x65, 0x6e, 0x74, 0x61, 0x69]).unwrap()
+    ];
+
+    // Move any sfw Novels into a new vector
+    let mut sfw_novels = Vec::new();
+    for novel in novels {
+    // Ensure that novels are SFW and that their titles have no flagged words
+        if !&novel.nsfw {
+            let mut legal_title = true;
+            for flagged_word in &illegal_titles {
+                if novel.title.to_lowercase().contains(flagged_word) {
+                    legal_title = false;
+                }
+        }
+        if legal_title {
+            sfw_novels.push(novel);
+        }
+    }
+}
 
     /*for novel in &sfw_novels {
         println!("{}", novel);

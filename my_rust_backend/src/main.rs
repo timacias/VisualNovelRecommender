@@ -23,6 +23,7 @@ type SharedState = Arc<Mutex<AppState>>;
 
 #[derive(Debug, Deserialize, Clone)]
 
+//this is a struct for the inputs recieved from the frontend, we get the inputs and put the values in here
 struct InputData {
     input: String,
     input2: String,
@@ -31,10 +32,10 @@ struct InputData {
     id2: String,
 }
 
+//this is a struct that hold everything
 struct AppState {
     novels: Vec<Novel>,
     result: Vec<String>,
-    time: f64,
     titletoid: HashMap<String, u16>,
     novel_graph: BTreeMap<u16, Vec<(u16, u16)>>
 }
@@ -77,8 +78,10 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
     // println!("{}", intnovelid2);
    
     state.result.clear();
+
     if !data.checked {
-        let dijkstra_path2 = state.novel_graph.dijkstra(&(state.titletoid.get(&data.input).unwrap()), &( state.titletoid.get(&data.input2).unwrap()), state.novels.clone());
+        let (dijkstra_path2,djistratime) = state.novel_graph.dijkstra(&(state.titletoid.get(&data.input).unwrap()), &( state.titletoid.get(&data.input2).unwrap()), state.novels.clone());
+        state.result.push(djistratime.to_string());
         for vertices in dijkstra_path2 {
             println!("{}: {}", state.novels[state.novels.find_novel(&vertices)].v_id, state.novels[state.novels.find_novel(&vertices)].title);
             println!("{}", state.novels[state.novels.find_novel(&vertices)]);
@@ -88,7 +91,8 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
             state.result.push(result);
         }
     } else {
-        let bellmanford = state.novel_graph.bellman_ford(&(state.titletoid.get(&data.input).unwrap()), &( state.titletoid.get(&data.input2).unwrap()), state.novels.clone());
+        let (bellmanford,bellmanfordtime) = state.novel_graph.bellman_ford(&(state.titletoid.get(&data.input).unwrap()), &( state.titletoid.get(&data.input2).unwrap()), state.novels.clone());
+        state.result.push(bellmanfordtime.to_string());
         for vertices in bellmanford {
             println!("{}: {}", state.novels[state.novels.find_novel(&vertices)].v_id, state.novels[state.novels.find_novel(&vertices)].title);
             println!("{}", state.novels[state.novels.find_novel(&vertices)]);
@@ -97,7 +101,6 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
             println!("{}", result);
             state.result.push(result);
         }
-
     }
 
     StatusCode::OK.into_response()
@@ -152,11 +155,11 @@ async fn main() {
     // TODO: Tim: I changed the attributes of the Novel struct
     //         try using novels : Vec<Novel> instead.
     // Shared state with initial data
-    let shared_state = Arc::new(Mutex::new(AppState{novels,result: vec![], time:0.0,titletoid: titles_to_ids ,novel_graph,}));
+    let shared_state = Arc::new(Mutex::new(AppState{novels,result: vec![],titletoid: titles_to_ids ,novel_graph,}));
 
 
     clearresult(&shared_state);
-    addresult(&shared_state, "test".to_string());
+    addresult(&shared_state, "0".to_string());
 
                                           
 
