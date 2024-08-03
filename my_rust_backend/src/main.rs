@@ -2,7 +2,7 @@ mod test;
 mod csv_reader;
 use std::collections::BTreeMap;
 use axum::{
-    extract::{Json, Extension, Query},
+    extract::{Json, Extension},
     response::IntoResponse,
     routing::{get, post},
     Router,
@@ -13,9 +13,6 @@ use std::sync::{Arc, Mutex};
 use std::net::SocketAddr;
 use tower_http::cors::{CorsLayer, AllowOrigin, AllowHeaders, AllowMethods};
 use tracing::{info, error, Level};
-use std::mem::swap;
-// use tracing_subscriber::FmtSubscriber;
-use lazy_static::lazy_static;
 // Import from modules
 use csv_reader::reading_csv;
 use test::Novel;
@@ -94,8 +91,8 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
 
 #[tokio::main]
 async fn main() {
-    // Get a vector of ONLY SFW novels
-    let novels = reading_csv();
+    // Get a vector of ONLY SFW novels and a map of novel titles to their respective v_ids
+    let (novels, titles_to_ids) = reading_csv();
 
     let mut num_data_points = 0;
     for novel in &novels {
@@ -217,57 +214,87 @@ async fn get_people(
 }
 
 // Returns a TreeMap of <v_id, Vec<v_id, weight>>
-/*async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u8)>> { // TODO: FIX TO MAKE UNDIRECTED GRAPH
-    let mut graph= BTreeMap::new();
-    for from in 0..novels.len() {
-        println!("{}, {}", novels[from].title, novels[from].v_id);
-        for to in from + 1..novels.len() {
-            // If the current node does not exist in the graph, add it
-            if !graph.contains_key(&novels[from].v_id) {
-                graph.insert(novels[from].v_id, vec![]);
-            }
-            let weight = novels[from].comparing(&novels[to]);
-            // Only add an edge to the graph if two novels have at least one similarity
-            if weight < 126 {
-                // Push the edge to the current node's adjList
-                graph.get_mut(&novels[from].v_id).unwrap().push((novels[to].v_id, weight));
-                // Ensure that the graph is undirected (edges are symmetric for both nodes)
-                // If the other node is not already in the graph, add it
-                if !graph.contains_key(&novels[to].v_id) {
-                    graph.insert(novels[to].v_id, vec![]);
-                }
-                // Now that the other node is in the graph add the current node to its adjList
-                graph.get_mut(&novels[to].v_id).unwrap().push((novels[to].v_id, weight));
-            }
-            // End if
-        }
-        
-    }
-    graph}*/
+// async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u16)>> { // TODO: FIX TO MAKE UNDIRECTED GRAPH
+//     let mut graph= BTreeMap::new();
+//     for from in 0..novels.len() {
+//         println!("{}, {}", novels[from].title, novels[from].v_id);
+//         for to in from + 1..novels.len() {
+//             // If the current node does not exist in the graph, add it
+//             if !graph.contains_key(&novels[from].v_id) {
+//                 graph.insert(novels[from].v_id, vec![]);
+//             }
+//             let weight = novels[from].comparing(&novels[to]);
+//             // Only add an edge to the graph if two novels have at least one similarity
+//             if weight < 126 {
+//                 // Push the edge to the current node's adjList
+//                 graph.get_mut(&novels[from].v_id).unwrap().push((novels[to].v_id, weight));
+//                 // Ensure that the graph is undirected (edges are symmetric for both nodes)
+//                 // If the other node is not already in the graph, add it
+//                 if !graph.contains_key(&novels[to].v_id) {
+//                     graph.insert(novels[to].v_id, vec![]);
+//                 }
+//                 // Now that the other node is in the graph add the current node to its adjList
+//                 graph.get_mut(&novels[to].v_id).unwrap().push((novels[to].v_id, weight));
+//             }
+//             // End if
+//         }
+//
+//     }
+//     graph
+// }
 
+// Returns a TreeMap of <v_id, Vec<v_id, weight>>
 async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u16)>> {
-     let mut graph: BTreeMap<u16, Vec<(u16,u16)>> = BTreeMap::new();
-     let mut num_edges: u32 = 0;
-     for from in 0..novels.len(){ // Comparing 'from' novel to every other novel after it.
-         println!("{}, {}", novels[from].title, novels[from].v_id);
-         let curr_num_edge = num_edges;
-         let mut weights: Vec<(u16, u16)> = vec![];
-         for to in 0..novels.len(){
-             if to != from {
-                 let similarity: u16 = novels[from].comparing(&novels[to]);
+    let mut graph= BTreeMap::new();
 
-                 if similarity > 0  && similarity < 70 {
-                     weights.push((novels[to].v_id, similarity));
-                     num_edges += 1;
-                 }
-             }
-         }
-         if num_edges - curr_num_edge == 0 {
-             println!("NO EDGED ADDED")
-         }
-         graph.insert(novels[from].v_id, weights.clone());
-         println!();
-     }
-    println!("NUM EDGES: {}", num_edges);
+    for from_index in 0..novels.len() {
+        for to_index in from_index + 1..novels.len() {
+            let from_id = novels[from_index].v_id;
+            let to_id = novels[to_index].v_id;
+
+            // Ensure that both the 'from' and 'to' novels are in the graph
+            if !graph.contains_key(&from_id) {
+                graph.insert(from_id, vec![]);
+            }
+            if !graph.contains_key(&to_id) {
+                graph.insert(to_id, vec![]);
+            }
+
+            let weight = novels[from_index].comparing(&novels[to_index]);
+            // Create an undirected edge, if the weight is within bounds
+            if weight > 0  && weight < 70 {
+                graph.get_mut(&from_id).unwrap().push((to_id, weight));
+                graph.get_mut(&to_id).unwrap().push((from_id, weight));
+            }
+        }
+    }
     graph
 }
+
+
+// async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u16)>> {
+//      let mut graph: BTreeMap<u16, Vec<(u16,u16)>> = BTreeMap::new();
+//      let mut num_edges: u32 = 0;
+//      for from in 0..novels.len(){ // Comparing 'from' novel to every other novel after it.
+//          println!("{}, {}", novels[from].title, novels[from].v_id);
+//          let curr_num_edge = num_edges;
+//          let mut weights: Vec<(u16, u16)> = vec![];
+//          for to in 0..novels.len(){
+//              if to != from {
+//                  let similarity: u16 = novels[from].comparing(&novels[to]);
+//
+//                  if similarity > 0  && similarity < 70 {
+//                      weights.push((novels[to].v_id, similarity));
+//                      num_edges += 1;
+//                  }
+//              }
+//          }
+//          if num_edges - curr_num_edge == 0 {
+//              println!("NO EDGED ADDED")
+//          }
+//          graph.insert(novels[from].v_id, weights.clone());
+//          println!();
+//      }
+//     println!("NUM EDGES: {}", num_edges);
+//     graph
+// }

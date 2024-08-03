@@ -1,6 +1,6 @@
 // 'tags_vn' has been sorted based on vid
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 // use std::fmt::Debug;
 use std::fs::File;
 use std::mem::swap;
@@ -8,9 +8,11 @@ use std::ops::Index;
 use crate::test;
 use test::Novel;
 
-pub fn reading_csv() -> Vec<Novel> {
+pub fn reading_csv() -> (Vec<Novel>, HashMap<String, u16>) {
     // Make vector of vn objects so that we can implement vn searching.
     let mut novels: Vec<Novel> = Vec::new();
+    // Make a map of vn titles to v_ids for faster v_id lookups by title
+    let mut titles_to_ids : HashMap<String, u16> = HashMap::new();
 
     // GET VISUAL NOVEL V_ID AND TITLE from "vn_titles" ////////////////////////////////////////////
     let vn_file = File::open("../database/db/vn_titles").unwrap();
@@ -59,12 +61,14 @@ pub fn reading_csv() -> Vec<Novel> {
             // Create the Novel struct and add it to the vector
             novels.push(Novel {
                 v_id,
-                title : title_to_use,
+                title : title_to_use.clone(),
                 seiyuu: HashSet::new(),
                 staff: HashSet::new(),
                 tag_cont: HashSet::new(),
                 nsfw : false
             });
+            // Add a title, v_id pair to the map
+            titles_to_ids.insert(title_to_use, v_id);
 
             v_id = curr_id;
             languages.clear();
@@ -252,8 +256,13 @@ pub fn reading_csv() -> Vec<Novel> {
     // Move any sfw Novels into a new vector
     let mut sfw_novels = Vec::new();
     for novel in novels {
-        if !(novel.nsfw || novel.title.to_lowercase().contains("sex")) {
+        if !novel.nsfw {
             sfw_novels.push(novel);
+        }
+        // Check to see if any sus novels are making it through
+        else if !novel.nsfw && novel.title.to_lowercase().contains("sex") {
+            println!("NSFW title found! {}\n\n\n\n", novel);
+            //panic!("NSFW title found!")
         }
     }
 
@@ -261,5 +270,5 @@ pub fn reading_csv() -> Vec<Novel> {
         println!("{}", novel);
     }*/
     // After dealing with the horrors of vndb, return the lovely vector of Novels
-    sfw_novels
+    (sfw_novels, titles_to_ids)
 }

@@ -2,7 +2,7 @@
 
 use std::collections::{BTreeMap, HashSet};
 use std::fmt;
-use std::fmt::{Debug, Display, Pointer};
+use std::fmt::{Display};
 use serde::{Serialize, Deserialize};
 
 // Novels are the data associated with nodes of the graph
@@ -35,7 +35,7 @@ impl Novel {
             smallest_sizes += self.seiyuu.len() as f32;
         }
         else{
-            smallest_sizes +=other_novel.seiyuu.len() as f32;
+            smallest_sizes += other_novel.seiyuu.len() as f32;
         }
 
         if self.staff.len() < other_novel.staff.len() {
@@ -62,7 +62,7 @@ impl Novel {
 
 pub trait FindNovel {
     fn find_novel(&self, vid: &u16) -> usize;
-    fn find_novel_title(&self, title: String) -> usize;
+    // fn find_novel_title(&self, title: String) -> usize;
 }
 
 // Binary Search to find index of novel dependent on vector.
@@ -85,14 +85,14 @@ impl FindNovel for Vec<Novel> {
         99999 // This instead of -1 for id not found.
     }
 
-    fn find_novel_title(&self, title: String) -> usize{
-        for i in 0..self.len(){
-            if title == self[i].title {
-                return i;
-            }
-        }
-        99999
-    }
+    // fn find_novel_title(&self, title: String) -> usize {
+    //     for i in 0..self.len(){
+    //         if title == self[i].title {
+    //             return i;
+    //         }
+    //     }
+    //     99999
+    // }
 }
 
 pub trait Graph {
