@@ -37,9 +37,8 @@ struct InputData {
 struct AppState {
     novels: Vec<Novel>,
     result: Vec<String>,
-    novel_graph: BTreeMap<u16, Vec<(u16, u8)>>
+    novel_graph: BTreeMap<u16, Vec<(u16, u16)>>
 }
-
 
 async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<SharedState>) -> impl IntoResponse {
     println!("Received input: {}", data.input);
@@ -74,12 +73,6 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
     println!("{}", intnovelid1);
     println!("{}", intnovelid2);
 
-    
-    let mut state = match state.lock() {
-        Ok(guard) => guard,
-        Err(poisoned) => poisoned.into_inner(), 
-    };
-
     state.result.clear();
     if !data.checked {
         let dijkstra_path2 = state.novel_graph.dijkstra(&(intnovelid1), &(intnovelid2), state.novels.clone());
@@ -92,7 +85,7 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
             state.result.push(result);
         }
     } else {
-       
+
     }
 
     StatusCode::OK.into_response()
@@ -113,57 +106,25 @@ async fn main() {
     let novel_graph = get_weights(&novels).await;
 
     let dijkstra_path1 = novel_graph.dijkstra(&(19119u16), &(18160u16), novels.clone());
+    let bellman_path1 = novel_graph.bellman_ford(&(19119u16), &(18160u16), novels.clone());
     // Fate/EXTELLA (v19119) being compared to Collar x Malice (v18160) -> NO PATH FOUND
 
     let dijkstra_path2 = novel_graph.dijkstra(&(18160u16), &(14908u16), novels.clone());
-    // Collar X Malice (v18160) being compared to Code:Realize (v14908) -> PATH FOUND BUT THERE ALSO MIGHT BE AN EDGE BETWEEN THE TWO IF WEIGHT > 112
-  
-     let dijkstra_path3 = novel_graph.dijkstra(&(4602u16), &(30175u16), novels.clone());
+    let bellman_path2 = novel_graph.bellman_ford(&(18160u16), &(14908u16), novels.clone());
+    // Collar X Malice (v18160) being compared to Code:Realize (v14908) -> PATH FOUND
+
+    let dijkstra_path3 = novel_graph.dijkstra(&(4602u16), &(30175u16), novels.clone());
+    let bellman_path3 = novel_graph.bellman_ford(&(4602u16), &(30175u16), novels.clone());
     // Utano Prince Sama being compared to B Project Ryuusei Fantasia
-    
-    let dijkstra_path4 = novel_graph.dijkstra(&(19119u16), &(14908u16), novels.clone());
-    // Fate/EXTELLA being compared to Code:Realize -> NO PATH FOUND
 
-    println!();
-    println!("DIJKSTRA_PATH1");
-    if dijkstra_path1.len() == 1{
-        println!("No path found!!!!");
-        println!();
+    if dijkstra_path1 == bellman_path1 {
+        println!("PATH 1 IS THE SAME!!!! YAY");
     }
-    else {
-        for vertices in dijkstra_path1{
-            println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
-            println!("{}", novels[novels.find_novel(&vertices)]);
-            println!();
-        }
+    if dijkstra_path2 == bellman_path2 {
+        println!("PATH 2 IS THE SAME!!!! YAY");
     }
-
-    println!();
-    println!("DIJKSTRA_PATH2");
-    if dijkstra_path2.len() == 1{
-        println!("No path found!!!!");
-        println!();
-    }
-    else {
-        for vertices in dijkstra_path2{
-            println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
-            println!("{}", novels[novels.find_novel(&vertices)]);
-            println!();
-        }
-    }
-
-    println!();
-    println!("DIJKSTRA_PATH3");
-    if dijkstra_path3.len() == 1{
-        println!("No path found!!!!");
-        println!();
-    }
-    else {
-        for vertices in dijkstra_path3{
-            println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
-            println!("{}", novels[novels.find_novel(&vertices)]);
-            println!();
-        }
+    if dijkstra_path3 == bellman_path3 {
+        println!("PATH 3 IS THE SAME!!!! YAY");
     }
 
     // Initialize logging
@@ -227,19 +188,18 @@ fn addresult(shared_state: &SharedState, entry: String) {
 
 
 
-async fn get_result( 
+async fn get_result(
     Extension(state): Extension<SharedState>,) -> impl IntoResponse {
-        match state.lock() {
-            Ok(state) => {
-                info!("Successfully fetched result data");
-                Json(state.result.clone()).into_response()
-            },
-            Err(poisoned) => {
-                error!("Failed to acquire lock: {:?}", poisoned);
-                (StatusCode::INTERNAL_SERVER_ERROR, "Failed to acquire lock").into_response()
-            }
+    match state.lock() {
+        Ok(state) => {
+            info!("Successfully fetched result data");
+            Json(state.result.clone()).into_response()
+        },
+        Err(poisoned) => {
+            error!("Failed to acquire lock: {:?}", poisoned);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to acquire lock").into_response()
         }
-
+    }
 }
 
 async fn get_people(
@@ -257,35 +217,33 @@ async fn get_people(
 }
 
 // Returns a TreeMap of <v_id, Vec<v_id, weight>>
- // TODO: THIS WILL RETURN SOMETHING
-// async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u8)>> { // TODO: THIS WILL RETURN SOMETHING
-//     let mut graph= BTreeMap::new();
-//     for from in 0..novels.len() {
-//         println!("{}, {}", novels[from].title, novels[from].v_id);
-//         for to in from + 1..novels.len() {
-//             // If the current node does not exist in the graph, add it
-//             if !graph.contains_key(&novels[from].v_id) {
-//                 graph.insert(novels[from].v_id, vec![]);
-//             }
-//             let weight = novels[from].comparing(&novels[to]);
-//             // Only add an edge to the graph if two novels have at least one similarity
-//             if weight < 126 {
-//                 // Push the edge to the current node's adjList
-//                 graph.get_mut(&novels[from].v_id).unwrap().push((novels[to].v_id, weight));
-//                 // Ensure that the graph is undirected (edges are symmetric for both nodes)
-//                 // If the other node is not already in the graph, add it
-//                 if !graph.contains_key(&novels[to].v_id) {
-//                     graph.insert(novels[to].v_id, vec![]);
-//                 }
-//                 // Now that the other node is in the graph add the current node to its adjList
-//                 graph.get_mut(&novels[to].v_id).unwrap().push((novels[to].v_id, weight));
-//             }
-//             // End if
-//         }
-//       }
-//     }
-//     graph}
-
+/*async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u8)>> { // TODO: FIX TO MAKE UNDIRECTED GRAPH
+    let mut graph= BTreeMap::new();
+    for from in 0..novels.len() {
+        println!("{}, {}", novels[from].title, novels[from].v_id);
+        for to in from + 1..novels.len() {
+            // If the current node does not exist in the graph, add it
+            if !graph.contains_key(&novels[from].v_id) {
+                graph.insert(novels[from].v_id, vec![]);
+            }
+            let weight = novels[from].comparing(&novels[to]);
+            // Only add an edge to the graph if two novels have at least one similarity
+            if weight < 126 {
+                // Push the edge to the current node's adjList
+                graph.get_mut(&novels[from].v_id).unwrap().push((novels[to].v_id, weight));
+                // Ensure that the graph is undirected (edges are symmetric for both nodes)
+                // If the other node is not already in the graph, add it
+                if !graph.contains_key(&novels[to].v_id) {
+                    graph.insert(novels[to].v_id, vec![]);
+                }
+                // Now that the other node is in the graph add the current node to its adjList
+                graph.get_mut(&novels[to].v_id).unwrap().push((novels[to].v_id, weight));
+            }
+            // End if
+        }
+        
+    }
+    graph}*/
 
 async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u16)>> {
      let mut graph: BTreeMap<u16, Vec<(u16,u16)>> = BTreeMap::new();
