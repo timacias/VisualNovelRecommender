@@ -4,6 +4,7 @@ use std::collections::{BTreeMap, HashSet};
 use std::fmt;
 use std::fmt::{Display};
 use serde::{Serialize, Deserialize};
+use std::time::{Instant};
 
 // Novels are the data associated with nodes of the graph
 #[derive(Serialize, Deserialize, Clone)]
@@ -96,18 +97,18 @@ impl FindNovel for Vec<Novel> {
 }
 
 pub trait Graph {
-    // TODO: Implement Dijkstra's and Bellman-Ford algorithms
-    fn dijkstra(&self, source : &u16, terminal : &u16, novels : Vec<Novel>) -> Vec<u16>;
-    fn bellman_ford(&self, source : &u16, terminal : &u16, novels : Vec<Novel>) -> Vec<u16>;
+    fn dijkstra(&self, source : &u16, terminal : &u16, novels : Vec<Novel>) -> (Vec<u16>, f64);
+    fn bellman_ford(&self, source : &u16, terminal : &u16, novels : Vec<Novel>) -> (Vec<u16>, f64);
 }
 
 // TreeMap of <v_id, Vec<v_id, weight>>
 impl Graph for BTreeMap<u16, Vec<(u16, u16)>> { // TODO: Figure out when to stop because the two are part to two different graphs
-    fn dijkstra(&self, source : &u16, terminal : &u16, novels : Vec<Novel>) -> Vec<u16> { // Self refers to the map
+    fn dijkstra(&self, source : &u16, terminal : &u16, novels : Vec<Novel>) -> (Vec<u16>, f64) { // Self refers to the map
+        let start_time = Instant::now();
         let mut path: Vec<u16> = Vec::new();
         if self[source].is_empty() || self[terminal].is_empty(){
             println!("EITHER SOURCE OR TERMINAL NOVEL HAS NO EDGE");
-            return path; // Returns an empty if the node is isolated.
+            return (path, start_time.elapsed().as_secs_f64()); // Returns an empty if the node is isolated.
         }
 
         let mut s: HashSet<u16> = HashSet::new(); // Computed id's
@@ -158,10 +159,12 @@ impl Graph for BTreeMap<u16, Vec<(u16, u16)>> { // TODO: Figure out when to stop
                 path.push(*current_id);
             }
         }
-        path
+
+        (path, start_time.elapsed().as_secs_f64())
     }
 
-    fn bellman_ford(&self, source : &u16, terminal : &u16, novels : Vec<Novel>) -> Vec<u16> {
+    fn bellman_ford(&self, source : &u16, terminal : &u16, novels : Vec<Novel>) -> (Vec<u16>, f64) {
+        let start_time = Instant::now();
         let mut path: Vec<u16> = Vec::new();
         let mut distance: Vec<i32> = vec![99999; novels.len()]; // Distance
         let mut previous: Vec<u16> = vec![0; novels.len()]; // Previous id's. Default set to 0 because no V0 exists
@@ -198,7 +201,7 @@ impl Graph for BTreeMap<u16, Vec<(u16, u16)>> { // TODO: Figure out when to stop
             }
         }
 
-        path
+        (path, start_time.elapsed().as_secs_f64())
     }
 
 }

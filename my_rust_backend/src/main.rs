@@ -229,36 +229,6 @@ async fn get_people(
 }
 
 // Returns a TreeMap of <v_id, Vec<v_id, weight>>
-// async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u16)>> { // TODO: FIX TO MAKE UNDIRECTED GRAPH
-//     let mut graph= BTreeMap::new();
-//     for from in 0..novels.len() {
-//         println!("{}, {}", novels[from].title, novels[from].v_id);
-//         for to in from + 1..novels.len() {
-//             // If the current node does not exist in the graph, add it
-//             if !graph.contains_key(&novels[from].v_id) {
-//                 graph.insert(novels[from].v_id, vec![]);
-//             }
-//             let weight = novels[from].comparing(&novels[to]);
-//             // Only add an edge to the graph if two novels have at least one similarity
-//             if weight < 126 {
-//                 // Push the edge to the current node's adjList
-//                 graph.get_mut(&novels[from].v_id).unwrap().push((novels[to].v_id, weight));
-//                 // Ensure that the graph is undirected (edges are symmetric for both nodes)
-//                 // If the other node is not already in the graph, add it
-//                 if !graph.contains_key(&novels[to].v_id) {
-//                     graph.insert(novels[to].v_id, vec![]);
-//                 }
-//                 // Now that the other node is in the graph add the current node to its adjList
-//                 graph.get_mut(&novels[to].v_id).unwrap().push((novels[to].v_id, weight));
-//             }
-//             // End if
-//         }
-//
-//     }
-//     graph
-// }
-
-// Returns a TreeMap of <v_id, Vec<v_id, weight>>
 async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u16)>> {
     let mut graph= BTreeMap::new();
 
@@ -277,7 +247,7 @@ async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u16)>> {
 
             let weight = novels[from_index].comparing(&novels[to_index]);
             // Create an undirected edge, if the weight is within bounds
-            if weight > 0  && weight < 70 {
+            if weight > 0 && weight < 70 {
                 graph.get_mut(&from_id).unwrap().push((to_id, weight));
                 graph.get_mut(&to_id).unwrap().push((from_id, weight));
             }
