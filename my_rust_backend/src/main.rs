@@ -37,7 +37,7 @@ struct InputData {
 struct AppState {
     novels: Vec<Novel>,
     result: Vec<String>,
-    novel_graph: BTreeMap<u16, Vec<(u16, u8)>>
+    novel_graph: BTreeMap<u16, Vec<(u16, u16)>>
 }
 
 
@@ -75,10 +75,6 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
     println!("{}", intnovelid2);
 
     
-    let mut state = match state.lock() {
-        Ok(guard) => guard,
-        Err(poisoned) => poisoned.into_inner(), 
-    };
 
     state.result.clear();
     if !data.checked {
