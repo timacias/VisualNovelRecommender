@@ -23,6 +23,7 @@ type SharedState = Arc<Mutex<AppState>>;
 
 #[derive(Debug, Deserialize, Clone)]
 
+//this is a struct for the inputs recieved from the frontend, we get the inputs and put the values in here
 struct InputData {
     input: String,
     input2: String,
@@ -31,6 +32,7 @@ struct InputData {
     id2: String,
 }
 
+//this is a struct that hold everything
 struct AppState {
     novels: Vec<Novel>,
     result: Vec<String>,
@@ -76,7 +78,7 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
     // println!("{}", intnovelid2);
    
     state.result.clear();
-    
+
     if !data.checked {
         let (dijkstra_path2,djistratime) = state.novel_graph.dijkstra(&(state.titletoid.get(&data.input).unwrap()), &( state.titletoid.get(&data.input2).unwrap()), state.novels.clone());
         state.result.push(djistratime.to_string());
