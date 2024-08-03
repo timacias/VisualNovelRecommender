@@ -54,6 +54,7 @@ function App() {
 //this checked is a boolean that signifies whether to use djikstras or bellmanford
 //time variable is time of algorithm
   const [checked, setchecked] = useState(false);
+  const [loading, setloading] = useState(false);
   const [time, settime] = useState("");
  
 //this is the function to get the shortest path then set it to the result vector this function will be called after the get results button and submit input button is pressed
@@ -83,7 +84,9 @@ function App() {
     getresults();
 
   }, []);
-  
+  const loadingcheck = (event) => {
+    setloading(event.target.loading);
+  };
   //this function calls the getresults function to render onscreen
   function refreshPage() {
     getresults();
@@ -133,6 +136,7 @@ function App() {
     }
     setCurrentnovel1(input);
     setCurrentnovel2(input2);
+    setloading(true);
     //https://dev.to/alexeagleson/how-to-set-up-a-fullstack-rust-project-with-axum-react-vite-and-shared-types-429e
     axios.post('http://localhost:3000/input', {
       input: input,
@@ -141,7 +145,8 @@ function App() {
       id2: id2,
       checked: checked
     })
-      .then(response => alert('Input was successfully sent to the backend'))
+      .then(
+        response => alert('Input was successfully sent to the backend'))
       .catch(error => console.error('Error sending input:', error));
   };
 
