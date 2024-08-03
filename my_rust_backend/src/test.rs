@@ -2,7 +2,7 @@
 
 use std::collections::{BTreeMap, HashSet};
 use std::fmt;
-use std::fmt::{Debug, Display, Pointer};
+use std::fmt::{Display};
 use serde::{Serialize, Deserialize};
 
 // Novels are the data associated with nodes of the graph
@@ -35,7 +35,7 @@ impl Novel {
             smallest_sizes += self.seiyuu.len() as f32;
         }
         else{
-            smallest_sizes +=other_novel.seiyuu.len() as f32;
+            smallest_sizes += other_novel.seiyuu.len() as f32;
         }
 
         if self.staff.len() < other_novel.staff.len() {
@@ -62,6 +62,7 @@ impl Novel {
 
 pub trait FindNovel {
     fn find_novel(&self, vid: &u16) -> usize;
+    // fn find_novel_title(&self, title: String) -> usize;
 }
 
 // Binary Search to find index of novel dependent on vector.
@@ -83,6 +84,15 @@ impl FindNovel for Vec<Novel> {
         }
         99999 // This instead of -1 for id not found.
     }
+
+    // fn find_novel_title(&self, title: String) -> usize {
+    //     for i in 0..self.len(){
+    //         if title == self[i].title {
+    //             return i;
+    //         }
+    //     }
+    //     99999
+    // }
 }
 
 pub trait Graph {
@@ -130,7 +140,7 @@ impl Graph for BTreeMap<u16, Vec<(u16, u16)>> { // TODO: Figure out when to stop
             // println!("{}: {}", novels[novels.find_novel(current_id)].v_id, novels[novels.find_novel(current_id)].title);
             // println!("Smallest Weight: {}\n", smallest_weight);
 
-            // If no change has occurred, the terminal vertex is disconnected from source and sense no path exists.
+            // If no change has occurred, the terminal vertex is disconnected from source and hence no path exists.
             if s.contains(current_id){
                 break;
             }
@@ -152,7 +162,43 @@ impl Graph for BTreeMap<u16, Vec<(u16, u16)>> { // TODO: Figure out when to stop
     }
 
     fn bellman_ford(&self, source : &u16, terminal : &u16, novels : Vec<Novel>) -> Vec<u16> {
-        todo!();
+        let mut path: Vec<u16> = Vec::new();
+        let mut distance: Vec<i32> = vec![99999; novels.len()]; // Distance
+        let mut previous: Vec<u16> = vec![0; novels.len()]; // Previous id's. Default set to 0 because no V0 exists
+
+        distance[novels.find_novel(source)] = 0;
+        for _iterations_needed in 0..novels.len(){ // Number of iterations needed for Bellman-Ford
+            let mut changed_made = false;
+            for node in 0..novels.len(){
+                let edge_list = self[&novels[node].v_id].clone();
+                for edge in edge_list{
+                    if edge.0 != *source &&
+                        distance[novels.find_novel(&edge.0)] > (distance[node] + i32::from(edge.1)){
+
+                        distance[novels.find_novel(&edge.0)] = distance[node] + i32::from(edge.1);
+                        previous[novels.find_novel(&edge.0)] = novels[node].v_id.clone();
+                        changed_made = true;
+                    }
+                }
+            }
+            if !changed_made{
+                break;
+            }
+        }
+
+        let mut current_id = terminal;
+        path.push(*terminal);
+        println!("Distance Needed: {}", distance[novels.find_novel(current_id)]);
+        if distance[novels.find_novel(terminal)] != 99999 && distance[novels.find_novel(source)] != 99999{
+            while current_id != source  && distance[novels.find_novel(current_id)] != 99999{
+                // println!("{}: {}", novels[novels.find_novel(current_id)].v_id, novels[novels.find_novel(current_id)].title);
+                // println!("Distance: {}\n", distance[novels.find_novel(current_id)]);
+                current_id = &previous[novels.find_novel(current_id)];
+                path.push(*current_id);
+            }
+        }
+
+        path
     }
 
 }

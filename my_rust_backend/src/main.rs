@@ -2,7 +2,7 @@ mod test;
 mod csv_reader;
 use std::collections::BTreeMap;
 use axum::{
-    extract::{Json, Extension, Query},
+    extract::{Json, Extension},
     response::IntoResponse,
     routing::{get, post},
     Router,
@@ -13,9 +13,6 @@ use std::sync::{Arc, Mutex};
 use std::net::SocketAddr;
 use tower_http::cors::{CorsLayer, AllowOrigin, AllowHeaders, AllowMethods};
 use tracing::{info, error, Level};
-use std::mem::swap;
-// use tracing_subscriber::FmtSubscriber;
-use lazy_static::lazy_static;
 // Import from modules
 use csv_reader::reading_csv;
 use test::Novel;
@@ -39,7 +36,6 @@ struct AppState {
     result: Vec<String>,
     novel_graph: BTreeMap<u16, Vec<(u16, u16)>>
 }
-
 
 async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<SharedState>) -> impl IntoResponse {
     println!("Received input: {}", data.input);
@@ -74,8 +70,6 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
     println!("{}", intnovelid1);
     println!("{}", intnovelid2);
 
-    
-
     state.result.clear();
     if !data.checked {
         let dijkstra_path2 = state.novel_graph.dijkstra(&(intnovelid1), &(intnovelid2), state.novels.clone());
@@ -88,7 +82,7 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
             state.result.push(result);
         }
     } else {
-       
+
     }
 
     StatusCode::OK.into_response()
@@ -97,8 +91,8 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
 
 #[tokio::main]
 async fn main() {
-    // Get a vector of ONLY SFW novels
-    let novels = reading_csv();
+    // Get a vector of ONLY SFW novels and a map of novel titles to their respective v_ids
+    let (novels, titles_to_ids) = reading_csv();
 
     let mut num_data_points = 0;
     for novel in &novels {
@@ -109,57 +103,25 @@ async fn main() {
     let novel_graph = get_weights(&novels).await;
 
     let dijkstra_path1 = novel_graph.dijkstra(&(19119u16), &(18160u16), novels.clone());
+    let bellman_path1 = novel_graph.bellman_ford(&(19119u16), &(18160u16), novels.clone());
     // Fate/EXTELLA (v19119) being compared to Collar x Malice (v18160) -> NO PATH FOUND
 
     let dijkstra_path2 = novel_graph.dijkstra(&(18160u16), &(14908u16), novels.clone());
-    // Collar X Malice (v18160) being compared to Code:Realize (v14908) -> PATH FOUND BUT THERE ALSO MIGHT BE AN EDGE BETWEEN THE TWO IF WEIGHT > 112
-  
-     let dijkstra_path3 = novel_graph.dijkstra(&(4602u16), &(30175u16), novels.clone());
+    let bellman_path2 = novel_graph.bellman_ford(&(18160u16), &(14908u16), novels.clone());
+    // Collar X Malice (v18160) being compared to Code:Realize (v14908) -> PATH FOUND
+
+    let dijkstra_path3 = novel_graph.dijkstra(&(4602u16), &(30175u16), novels.clone());
+    let bellman_path3 = novel_graph.bellman_ford(&(4602u16), &(30175u16), novels.clone());
     // Utano Prince Sama being compared to B Project Ryuusei Fantasia
-    
-    let dijkstra_path4 = novel_graph.dijkstra(&(19119u16), &(14908u16), novels.clone());
-    // Fate/EXTELLA being compared to Code:Realize -> NO PATH FOUND
 
-    println!();
-    println!("DIJKSTRA_PATH1");
-    if dijkstra_path1.len() == 1{
-        println!("No path found!!!!");
-        println!();
+    if dijkstra_path1 == bellman_path1 {
+        println!("PATH 1 IS THE SAME!!!! YAY");
     }
-    else {
-        for vertices in dijkstra_path1{
-            println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
-            println!("{}", novels[novels.find_novel(&vertices)]);
-            println!();
-        }
+    if dijkstra_path2 == bellman_path2 {
+        println!("PATH 2 IS THE SAME!!!! YAY");
     }
-
-    println!();
-    println!("DIJKSTRA_PATH2");
-    if dijkstra_path2.len() == 1{
-        println!("No path found!!!!");
-        println!();
-    }
-    else {
-        for vertices in dijkstra_path2{
-            println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
-            println!("{}", novels[novels.find_novel(&vertices)]);
-            println!();
-        }
-    }
-
-    println!();
-    println!("DIJKSTRA_PATH3");
-    if dijkstra_path3.len() == 1{
-        println!("No path found!!!!");
-        println!();
-    }
-    else {
-        for vertices in dijkstra_path3{
-            println!("{}: {}", novels[novels.find_novel(&vertices)].v_id, novels[novels.find_novel(&vertices)].title);
-            println!("{}", novels[novels.find_novel(&vertices)]);
-            println!();
-        }
+    if dijkstra_path3 == bellman_path3 {
+        println!("PATH 3 IS THE SAME!!!! YAY");
     }
 
     // Initialize logging
@@ -223,19 +185,18 @@ fn addresult(shared_state: &SharedState, entry: String) {
 
 
 
-async fn get_result( 
+async fn get_result(
     Extension(state): Extension<SharedState>,) -> impl IntoResponse {
-        match state.lock() {
-            Ok(state) => {
-                info!("Successfully fetched result data");
-                Json(state.result.clone()).into_response()
-            },
-            Err(poisoned) => {
-                error!("Failed to acquire lock: {:?}", poisoned);
-                (StatusCode::INTERNAL_SERVER_ERROR, "Failed to acquire lock").into_response()
-            }
+    match state.lock() {
+        Ok(state) => {
+            info!("Successfully fetched result data");
+            Json(state.result.clone()).into_response()
+        },
+        Err(poisoned) => {
+            error!("Failed to acquire lock: {:?}", poisoned);
+            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to acquire lock").into_response()
         }
-
+    }
 }
 
 async fn get_people(
@@ -253,8 +214,7 @@ async fn get_people(
 }
 
 // Returns a TreeMap of <v_id, Vec<v_id, weight>>
- // TODO: THIS WILL RETURN SOMETHING
-// async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u8)>> { // TODO: THIS WILL RETURN SOMETHING
+// async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u16)>> { // TODO: FIX TO MAKE UNDIRECTED GRAPH
 //     let mut graph= BTreeMap::new();
 //     for from in 0..novels.len() {
 //         println!("{}, {}", novels[from].title, novels[from].v_id);
@@ -278,34 +238,63 @@ async fn get_people(
 //             }
 //             // End if
 //         }
-//       }
+//
 //     }
-//     graph}
+//     graph
+// }
 
-
+// Returns a TreeMap of <v_id, Vec<v_id, weight>>
 async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u16)>> {
-     let mut graph: BTreeMap<u16, Vec<(u16,u16)>> = BTreeMap::new();
-     let mut num_edges: u32 = 0;
-     for from in 0..novels.len(){ // Comparing 'from' novel to every other novel after it.
-         println!("{}, {}", novels[from].title, novels[from].v_id);
-         let curr_num_edge = num_edges;
-         let mut weights: Vec<(u16, u16)> = vec![];
-         for to in 0..novels.len(){
-             if to != from {
-                 let similarity: u16 = novels[from].comparing(&novels[to]);
+    let mut graph= BTreeMap::new();
 
-                 if similarity > 0  && similarity < 70 {
-                     weights.push((novels[to].v_id, similarity));
-                     num_edges += 1;
-                 }
-             }
-         }
-         if num_edges - curr_num_edge == 0 {
-             println!("NO EDGED ADDED")
-         }
-         graph.insert(novels[from].v_id, weights.clone());
-         println!();
-     }
-    println!("NUM EDGES: {}", num_edges);
+    for from_index in 0..novels.len() {
+        for to_index in from_index + 1..novels.len() {
+            let from_id = novels[from_index].v_id;
+            let to_id = novels[to_index].v_id;
+
+            // Ensure that both the 'from' and 'to' novels are in the graph
+            if !graph.contains_key(&from_id) {
+                graph.insert(from_id, vec![]);
+            }
+            if !graph.contains_key(&to_id) {
+                graph.insert(to_id, vec![]);
+            }
+
+            let weight = novels[from_index].comparing(&novels[to_index]);
+            // Create an undirected edge, if the weight is within bounds
+            if weight > 0  && weight < 70 {
+                graph.get_mut(&from_id).unwrap().push((to_id, weight));
+                graph.get_mut(&to_id).unwrap().push((from_id, weight));
+            }
+        }
+    }
     graph
 }
+
+
+// async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u16)>> {
+//      let mut graph: BTreeMap<u16, Vec<(u16,u16)>> = BTreeMap::new();
+//      let mut num_edges: u32 = 0;
+//      for from in 0..novels.len(){ // Comparing 'from' novel to every other novel after it.
+//          println!("{}, {}", novels[from].title, novels[from].v_id);
+//          let curr_num_edge = num_edges;
+//          let mut weights: Vec<(u16, u16)> = vec![];
+//          for to in 0..novels.len(){
+//              if to != from {
+//                  let similarity: u16 = novels[from].comparing(&novels[to]);
+//
+//                  if similarity > 0  && similarity < 70 {
+//                      weights.push((novels[to].v_id, similarity));
+//                      num_edges += 1;
+//                  }
+//              }
+//          }
+//          if num_edges - curr_num_edge == 0 {
+//              println!("NO EDGED ADDED")
+//          }
+//          graph.insert(novels[from].v_id, weights.clone());
+//          println!();
+//      }
+//     println!("NUM EDGES: {}", num_edges);
+//     graph
+// }
