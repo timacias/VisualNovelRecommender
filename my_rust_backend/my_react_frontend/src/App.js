@@ -169,8 +169,11 @@ function App() {
   const Column1 = ({ index, style }) => (
     <div style={style}>
        <div className={index % 2 ? 'list1' : 'list2'}>
+       <button onClick={() => setInput(nameSearch[index].title)}>
        <b> Name: </b>{nameSearch[index].title + ' '}
         <b>Tags:</b> {Array.from(nameSearch[index].tag_cont).slice(0, 3).join(', ')}
+        </button>
+
       </div>
     </div>
   );
@@ -179,9 +182,11 @@ function App() {
   const Column2 = ({ index, style }) => (
     <div style={style}>
       <div className={index % 2 ? 'list1' : 'list2'}>
+      <button onClick={() => setInput2(nameSearch2[index].title)}>
         <b>Name:</b> {nameSearch2[index].title + ' '}
-        <b>ID:</b> {nameSearch2[index].v_id + ' '}
         <b>Tags:</b> {Array.from(nameSearch2[index].tag_cont).slice(0, 3).join(', ')}
+        </button>
+
       </div>
     </div>
   );
@@ -190,13 +195,11 @@ function App() {
 
   return (
     <div className="App">
-      <h2>Note: our database for Novels is not including NSFW and r18 tags, our database is from the June 24, 2024 VNDB</h2>
-      <h3>Because the VNDB is an ongoing database that includes realy old novels and novels that are in progress, some information such as date, rating, image, or description may not be available</h3>
-      <h3>due to this there are a lot of islands and unreachable novels</h3>
-      <h3>Some NSFW novels may slip through due to lack of proper nsfw tag documentation from the vndb</h3>
-      <h3>our lists only display the top 3 tags in a novel for visual clarity, but we use all of the tags in calculation</h3>
-      <h3>Graph edges is based on similarity score, we only create an edge if a certain similarity score is met</h3>
-
+    <h5>Instructions: search a novel in our database</h5>
+    <h5>click the button in list for the novel you want, this is important because our algorithms are case sensitive</h5>
+    <h5>if you input novel wrong(case sensitive) it will break!!</h5>
+    <h5>click both check database buttons, then click send input, wait for a popup saying input is sent</h5>
+    <h5>then click get result</h5>
       <div class="flexbox-container">
         <div class="module">
           <h1>Choose a starting novel!</h1>

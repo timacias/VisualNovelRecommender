@@ -1,6 +1,6 @@
 mod test;
 mod csv_reader;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use axum::{
     extract::{Json, Extension},
     response::IntoResponse,
@@ -34,6 +34,8 @@ struct InputData {
 struct AppState {
     novels: Vec<Novel>,
     result: Vec<String>,
+    time: f64,
+    titletoid: HashMap<String, u16>,
     novel_graph: BTreeMap<u16, Vec<(u16, u16)>>
 }
 
@@ -46,33 +48,37 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
 
 
     let mut state = state.lock().unwrap();
+
+    println!("test");
     state.result.clear();
-    state.result.push(data.input.clone());
-    state.result.push(data.input2.clone());
-    state.result.push(data.checked.to_string());
+   
+   //this was old method of getting the id, id was passed in from frontend through api, now we get it from backend 
+    // state.result.push(data.input.clone());
+    // state.result.push(data.input2.clone());
+    // state.result.push(data.checked.to_string());
 
-    let novelid1 = &data.id1[1..].to_string();
-    let novelid2 = &data.id2[1..].to_string();
-    let intnovelid1: u16 = match novelid1.parse() {
-        Ok(num) => num,
-        Err(e) => {
-            println!("Error parsing novelid1: {}", e);
-            return (StatusCode::BAD_REQUEST, "Invalid id1 format").into_response();
-        }
-    };
-    let intnovelid2: u16 = match novelid2.parse() {
-        Ok(num) => num,
-        Err(e) => {
-            println!("Error parsing novelid2: {}", e);
-            return (StatusCode::BAD_REQUEST, "Invalid id2 format").into_response();
-        }
-    };
-    println!("{}", intnovelid1);
-    println!("{}", intnovelid2);
-
+    // let novelid1 = &data.id1[1..].to_string();
+    // let novelid2 = &data.id2[1..].to_string();
+    // let intnovelid1: u16 = match novelid1.parse() {
+    //     Ok(num) => num,
+    //     Err(e) => {
+    //         println!("Error parsing novelid1: {}", e);
+    //         return (StatusCode::BAD_REQUEST, "Invalid id1 format").into_response();
+    //     }
+    // };
+    // let intnovelid2: u16 = match novelid2.parse() {
+    //     Ok(num) => num,
+    //     Err(e) => {
+    //         println!("Error parsing novelid2: {}", e);
+    //         return (StatusCode::BAD_REQUEST, "Invalid id2 format").into_response();
+    //     }
+    // };
+    // println!("{}", intnovelid1);
+    // println!("{}", intnovelid2);
+   
     state.result.clear();
     if !data.checked {
-        let dijkstra_path2 = state.novel_graph.dijkstra(&(intnovelid1), &(intnovelid2), state.novels.clone());
+        let dijkstra_path2 = state.novel_graph.dijkstra(&(state.titletoid.get(&data.input).unwrap()), &( state.titletoid.get(&data.input2).unwrap()), state.novels.clone());
         for vertices in dijkstra_path2 {
             println!("{}: {}", state.novels[state.novels.find_novel(&vertices)].v_id, state.novels[state.novels.find_novel(&vertices)].title);
             println!("{}", state.novels[state.novels.find_novel(&vertices)]);
@@ -82,6 +88,15 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
             state.result.push(result);
         }
     } else {
+        let bellmanford = state.novel_graph.bellman_ford(&(state.titletoid.get(&data.input).unwrap()), &( state.titletoid.get(&data.input2).unwrap()), state.novels.clone());
+        for vertices in bellmanford {
+            println!("{}: {}", state.novels[state.novels.find_novel(&vertices)].v_id, state.novels[state.novels.find_novel(&vertices)].title);
+            println!("{}", state.novels[state.novels.find_novel(&vertices)]);
+            println!();
+            let result = state.novels[state.novels.find_novel(&vertices)].title.to_string();
+            println!("{}", result);
+            state.result.push(result);
+        }
 
     }
 
@@ -137,7 +152,7 @@ async fn main() {
     // TODO: Tim: I changed the attributes of the Novel struct
     //         try using novels : Vec<Novel> instead.
     // Shared state with initial data
-    let shared_state = Arc::new(Mutex::new(AppState{novels,result: vec![],novel_graph,}));
+    let shared_state = Arc::new(Mutex::new(AppState{novels,result: vec![], time:0.0,titletoid: titles_to_ids ,novel_graph,}));
 
 
     clearresult(&shared_state);
@@ -271,6 +286,7 @@ async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u16)>> {
     graph
 }
 
+//this was our old method to calculate weights it took longer to calulate
 
 // async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u16)>> {
 //      let mut graph: BTreeMap<u16, Vec<(u16,u16)>> = BTreeMap::new();
