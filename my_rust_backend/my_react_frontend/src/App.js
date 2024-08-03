@@ -52,20 +52,24 @@ function App() {
   //this is a result vector that gets an array of novels that form the shortest path from the backens
   const [Result, setResult] = useState([]);
 //this checked is a boolean that signifies whether to use djikstras or bellmanford
+//time variable is time of algorithm
   const [checked, setchecked] = useState(false);
-
+  const [time, settime] = useState("");
  
 //this is the function to get the shortest path then set it to the result vector this function will be called after the get results button and submit input button is pressed
+//get first entry in array which is time taken for algorithm and from second onwards is the shortest path
   const getresults = () => {
     axios.get('http://localhost:3000/result')
     .then(response => {
-      setResult(response.data);
+      settime(response.data[0]);
+      setResult(response.data.slice(1));
     })
     .catch(error => console.error('Error fetching data:', error));
 }
 
 //this is the useffect, this is called whenever something needs to render, so this is basically called at the start of launching the application and initializes
 //the backend information to the frontend. It gets the graph and puts it into the novel vectors on startup and calls getresults to initialize it blank.
+
   useEffect(() => {
 
     axios.get('http://localhost:3000/people')
@@ -281,6 +285,7 @@ function App() {
       </div>
             {/* render the shortest path results by calling the api component again, but with boolean = to false for a different display format */}
     <h2><b>Results!</b></h2>
+    <h1>Time taken: {time} seconds!!!!!</h1>
       <ul>
         {/* only display it if the length is 2 or more, if less it means there was no path */}
       {Result.length < 2 ? (
