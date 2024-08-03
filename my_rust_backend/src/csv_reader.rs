@@ -253,18 +253,14 @@ pub fn reading_csv() -> (Vec<Novel>, HashMap<String, u16>) {
     swap(&mut novels[novels_index + 2].nsfw, &mut v_is_ero);
 
 
-    // Move any sfw Novels into a new vector
-    let mut sfw_novels = Vec::new();
-    for novel in novels {
-        if !novel.nsfw {
-            sfw_novels.push(novel);
-        }
-        // Check to see if any sus novels are making it through
-        else if !novel.nsfw && novel.title.to_lowercase().contains("sex") {
-            println!("NSFW title found! {}\n\n\n\n", novel);
-            //panic!("NSFW title found!")
-        }
-    }
+   // Move any sfw Novels into a new vector
+   let mut sfw_novels = Vec::new();
+   for novel in novels {
+       // Ensure that novels are SFW and that their titles have no flagged words
+       if !novel.nsfw && !novel.title.to_lowercase().contains("sex") {
+           sfw_novels.push(novel);
+       }
+   }
 
     /*for novel in &sfw_novels {
         println!("{}", novel);
