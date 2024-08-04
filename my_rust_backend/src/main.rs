@@ -52,7 +52,6 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
 
     let mut state = state.lock().unwrap();
 
-    println!("test");
     state.result.clear();
 
 
