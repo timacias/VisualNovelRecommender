@@ -34,6 +34,9 @@ pub fn reading_csv() -> (Vec<Novel>, HashMap<String, u16>) {
             .unwrap();
 
         if v_id != curr_id {
+            // First priority is the English version of the title. If not available
+            // Finds the Japanese (Romanji if available) version of the title.
+            // Else, the first available tile, in roman letters.
             for i in 0..languages.len() {
                 if languages[i] == "en" {
                     title_to_use = titles[i].clone();
@@ -89,6 +92,7 @@ pub fn reading_csv() -> (Vec<Novel>, HashMap<String, u16>) {
         .delimiter(b'\t')
         .from_reader(alias_file);
 
+    // Some alias ids get skipped
     let mut names: Vec<String> = vec!["N/A".to_string(); 46643];
     for alias in alias_reader.records() {
         let record = alias.unwrap();
@@ -131,7 +135,7 @@ pub fn reading_csv() -> (Vec<Novel>, HashMap<String, u16>) {
             v_id = curr_id;
         }
 
-        let index_str = record.index(1).to_string();  // `parse()` works with `&str` and `String`!
+        let index_str = record.index(1).to_string();
         let index_int = index_str.parse::<usize>().unwrap();
         let name = names[index_int].clone();
 
@@ -170,7 +174,7 @@ pub fn reading_csv() -> (Vec<Novel>, HashMap<String, u16>) {
             v_id = curr_id;
         }
 
-        let index_str = record.index(1).to_string();  // `parse()` works with `&str` and `String`!
+        let index_str = record.index(1).to_string();
         let index_int = index_str.parse::<usize>().unwrap();
         let name = names[index_int].clone();
 
@@ -187,6 +191,7 @@ pub fn reading_csv() -> (Vec<Novel>, HashMap<String, u16>) {
         .delimiter(b'\t')
         .from_reader(tags_file);
 
+    // Every tag is categorized as "cont", "tech", and "ero"
     let mut tag_names: Vec<String> = vec!["N/A".to_string(); 3918];
     let mut tag_category: Vec<String> = vec!["N/A".to_string(); 3918];
     for tag in tags_reader.records() {
@@ -263,6 +268,8 @@ pub fn reading_csv() -> (Vec<Novel>, HashMap<String, u16>) {
     ];
 
     // Move any sfw Novels into a new vector
+    // nsfw Novels are identified by if they contain any tag categorized as "ero"
+    // and if the title contains any of the illegal words we've deemed inappropriate
     let mut sfw_novels = Vec::new();
     for novel in novels {
     // Ensure that novels are SFW and that their titles have no flagged words
@@ -279,9 +286,6 @@ pub fn reading_csv() -> (Vec<Novel>, HashMap<String, u16>) {
     }
 }
 
-    /*for novel in &sfw_novels {
-        println!("{}", novel);
-    }*/
-    // After dealing with the horrors of vndb, return the lovely vector of Novels
+    // After dealing with the horrors of VNDB, return the lovely vector of Novels
     (sfw_novels, titles_to_ids)
 }
