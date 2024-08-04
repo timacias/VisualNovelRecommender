@@ -1,7 +1,6 @@
 // 'tags_vn' has been sorted based on vid
 
 use std::collections::{HashMap, HashSet};
-// use std::fmt::Debug;
 use std::fs::File;
 use std::mem::swap;
 use std::ops::Index;
@@ -36,7 +35,7 @@ pub fn reading_csv() -> (Vec<Novel>, HashMap<String, u16>) {
         if v_id != curr_id {
             // First priority is the English version of the title. If not available
             // Finds the Japanese (Romanji if available) version of the title.
-            // Else, the first available tile, in roman letters.
+            // Else, the first available title, in roman letters.
             for i in 0..languages.len() {
                 if languages[i] == "en" {
                     title_to_use = titles[i].clone();
@@ -143,10 +142,10 @@ pub fn reading_csv() -> (Vec<Novel>, HashMap<String, u16>) {
             seiyuu_names.insert(name);
         }
     }
-    // Same issue as above (fence post problem w/ for-loop)
+    // Fence post problem w/ for-loop
     swap(&mut novels[novels_index + 2].seiyuu, &mut seiyuu_names);
 
-    // GET STAFF NAMES from "vn_staff" ///////////////////////////////////////////////////////////
+    // GET STAFF NAMES from "vn_staff" /////////////////////////////////////////////////////////////
     v_id = 1;
     let mut novels_index = 0usize;
     let staff_file = File::open("../database/db/vn_staff").unwrap();
@@ -257,14 +256,13 @@ pub fn reading_csv() -> (Vec<Novel>, HashMap<String, u16>) {
     swap(&mut novels[novels_index + 2].tag_cont, &mut tags_vn_cont_names);
     swap(&mut novels[novels_index + 2].nsfw, &mut v_is_ero);
 
-
-  // A vector containing a string of flagged words
-  let illegal_titles = [String::from_utf8(vec![0x73, 0x65, 0x78]).unwrap(),
-    String::from_utf8(vec![0x66, 0x75, 0x63, 0x6b]).unwrap(),
-    String::from_utf8(vec![0x69, 0x6e, 0x63, 0x65, 0x73, 0x74]).unwrap(),
-    String::from_utf8(vec![0x62, 0x6f, 0x6f, 0x62]).unwrap(),
-    String::from_utf8(vec![0x70, 0x75, 0x73, 0x73, 0x79]).unwrap(),
-    String::from_utf8(vec![0x68, 0x65, 0x6e, 0x74, 0x61, 0x69]).unwrap()
+    // A vector containing a string of flagged words
+    let illegal_titles = [String::from_utf8(vec![0x73, 0x65, 0x78]).unwrap(),
+        String::from_utf8(vec![0x66, 0x75, 0x63, 0x6b]).unwrap(),
+        String::from_utf8(vec![0x69, 0x6e, 0x63, 0x65, 0x73, 0x74]).unwrap(),
+        String::from_utf8(vec![0x62, 0x6f, 0x6f, 0x62]).unwrap(),
+        String::from_utf8(vec![0x70, 0x75, 0x73, 0x73, 0x79]).unwrap(),
+        String::from_utf8(vec![0x68, 0x65, 0x6e, 0x74, 0x61, 0x69]).unwrap()
     ];
 
     // Move any sfw Novels into a new vector
@@ -272,19 +270,19 @@ pub fn reading_csv() -> (Vec<Novel>, HashMap<String, u16>) {
     // and if the title contains any of the illegal words we've deemed inappropriate
     let mut sfw_novels = Vec::new();
     for novel in novels {
-    // Ensure that novels are SFW and that their titles have no flagged words
+        // Ensure that novels are SFW and that their titles have no flagged words
         if !&novel.nsfw {
             let mut legal_title = true;
             for flagged_word in &illegal_titles {
                 if novel.title.to_lowercase().contains(flagged_word) {
                     legal_title = false;
                 }
-        }
-        if legal_title {
-            sfw_novels.push(novel);
+            }
+            if legal_title {
+                sfw_novels.push(novel);
+            }
         }
     }
-}
 
     // After dealing with the horrors of VNDB, return the lovely vector of Novels
     (sfw_novels, titles_to_ids)

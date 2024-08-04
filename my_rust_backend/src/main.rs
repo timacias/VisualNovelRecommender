@@ -1,5 +1,8 @@
+// Create modules
 mod test;
 mod csv_reader;
+
+// Import from crates
 use std::collections::{BTreeMap, HashMap};
 use axum::{
     extract::{Json, Extension},
@@ -8,11 +11,12 @@ use axum::{
     Router,
     http::StatusCode,
 };
-use serde::{/*Serialize,*/ Deserialize};
+use serde::{Deserialize};
 use std::sync::{Arc, Mutex};
 use std::net::SocketAddr;
 use tower_http::cors::{CorsLayer, AllowOrigin, AllowHeaders, AllowMethods};
 use tracing::{info, error, Level};
+
 // Import from modules
 use csv_reader::reading_csv;
 use test::Novel;
@@ -20,10 +24,9 @@ use crate::test::{FindNovel, Graph};
 
 type SharedState = Arc<Mutex<AppState>>;
 
-
+// This is a struct for the inputs received from the frontend,
+// we get the inputs and put the values in here
 #[derive(Debug, Deserialize, Clone)]
-
-//this is a struct for the inputs recieved from the frontend, we get the inputs and put the values in here
 struct InputData {
     input: String,
     input2: String,
@@ -32,7 +35,8 @@ struct InputData {
     id2: String,
 }
 
-//this is a struct that holds everything, the novels, the result of shortest path, the graph which calls the functions, and a hashmap to get id by title
+// This is a struct that holds everything, including:
+// the novels, the result of shortest path, the graph which calls the functions, and a hashmap to get id by title
 struct AppState {
     novels: Vec<Novel>,
     result: Vec<String>,
@@ -40,28 +44,25 @@ struct AppState {
     novel_graph: BTreeMap<u16, Vec<(u16, u16)>>
 }
 
-//this function recieves the input from the frontend, the appstate struct is passed into this so it can have access to the graph algorithms and put the shortest path into the result vector
-//it gets the data, clears the result vector, uses the algortihm depending on a boolean that the user checks and pushes the results and time into the result vector 
+// This function receives the input from the frontend,
+// the AppState struct is passed into this, so it can have access to the graph algorithms and put the shortest path into the result vector
+// it gets the data, clears the result vector,uses the algorithm depending on a boolean that the user checks and pushes the results and time into the result vector 
 async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<SharedState>) -> impl IntoResponse {
     println!("Received input: {}", data.input);
     println!("Received input: {}", data.input2);
     println!("Received input: {}", data.checked);
     println!("Received input: {}", data.id1);
     println!("Received input: {}", data.id2);
-
-
+    
     let mut state = state.lock().unwrap();
-
     state.result.clear();
-
 
     if !data.checked {
         let (dijkstra_path2,djistratime) = state.novel_graph.dijkstra(&(state.titletoid.get(&data.input).unwrap()), &( state.titletoid.get(&data.input2).unwrap()), state.novels.clone());
         state.result.push(djistratime.to_string());
         for vertices in dijkstra_path2 {
             println!("{}: {}", state.novels[state.novels.find_novel(&vertices)].v_id, state.novels[state.novels.find_novel(&vertices)].title);
-            println!("{}", state.novels[state.novels.find_novel(&vertices)]);
-            println!();
+            println!("{}\n", state.novels[state.novels.find_novel(&vertices)]);
             let result = state.novels[state.novels.find_novel(&vertices)].title.to_string();
             println!("{}", result);
             state.result.push(result);
@@ -71,18 +72,14 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
         state.result.push(bellmanfordtime.to_string());
         for vertices in bellmanford {
             println!("{}: {}", state.novels[state.novels.find_novel(&vertices)].v_id, state.novels[state.novels.find_novel(&vertices)].title);
-            println!("{}", state.novels[state.novels.find_novel(&vertices)]);
-            println!();
+            println!("{}\n", state.novels[state.novels.find_novel(&vertices)]);
             let result = state.novels[state.novels.find_novel(&vertices)].title.to_string();
             println!("{}", result);
             state.result.push(result);
         }
     }
-
     StatusCode::OK.into_response()
-
 }
-
 
 #[tokio::main]
 async fn main() {
@@ -105,19 +102,17 @@ async fn main() {
         .allow_origin(AllowOrigin::any())
         .allow_methods(AllowMethods::any())
         .allow_headers(AllowHeaders::any());
-
-    // TODO: Tim: I changed the attributes of the Novel struct
-    //         try using novels : Vec<Novel> instead.
+    
 
     // Shared state with initial data it initializes and holds the novels, graphs, and results
-    let shared_state = Arc::new(Mutex::new(AppState{novels,result: vec![],titletoid: titles_to_ids ,novel_graph,}));
+    let shared_state = Arc::new(Mutex::new(AppState{novels, result: vec![], titletoid: titles_to_ids, novel_graph}));
 
-    //initialize the result vector to make sure its empty and default is 0 for time 
+    // Initialize the result vector to make sure its empty and default is 0 for time 
     clearresult(&shared_state);
     addresult(&shared_state, "0".to_string());
 
     // Define routes for the backend server and functions. get requests send data to frontend, post requests get data from frontend. they each call a function
-    //for what to do. This sets up the backend rust server on localhost 3000
+    // for what to do. This sets up the backend rust server on localhost 3000
     let app = Router::new()
         .route("/", get(root))
         .route("/people", get(get_people))
@@ -137,6 +132,7 @@ async fn main() {
 async fn root() -> &'static str {
     "Hello World"
 }
+
 //add to result vector called from addresult
 fn resultadd(state: &mut AppState, entry: String) {
     state.result.push(entry);
@@ -159,7 +155,6 @@ fn addresult(shared_state: &SharedState, entry: String) {
     resultadd(&mut state, entry);
 }
 
-
 //send the results after calculations from the algorithms to the frontend, it has the state with all the vectors and sends it to the frontend as a response
 async fn get_result(
     Extension(state): Extension<SharedState>,) -> impl IntoResponse {
@@ -174,6 +169,7 @@ async fn get_result(
         }
     }
 }
+
 //send the initial vector with all the novels in our graph to the frontend, it is then displayed as the lists
 async fn get_people(
     Extension(state): Extension<SharedState>,) -> impl IntoResponse {

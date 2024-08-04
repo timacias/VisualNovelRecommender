@@ -1,5 +1,3 @@
-// Ord implementation (required for usage in BTreeMap) inspired by https://stackoverflow.com/questions/29884402#29884582
-
 use std::collections::{BTreeMap, HashSet};
 use std::fmt;
 use std::fmt::{Display};
@@ -17,6 +15,7 @@ pub struct Novel {
     pub nsfw: bool
 }
 
+// Allow Novels to be displayed using println!
 impl Display for Novel {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Id: {} | Title: {}\nVoice Actors: {:?}\nStaff: {:?}\nContent Tags: {:?}\nNSFW?: {:?}\n",
@@ -69,7 +68,6 @@ impl Novel {
 
 pub trait FindNovel {
     fn find_novel(&self, vid: &u16) -> usize;
-    // fn find_novel_title(&self, title: String) -> usize;
 }
 
 // Binary Search to find index of novel dependent on vector.
@@ -202,5 +200,4 @@ impl Graph for BTreeMap<u16, Vec<(u16, u16)>> { // TODO: Figure out when to stop
         }
         (path, start_time.elapsed().as_secs_f64())
     }
-
 }
