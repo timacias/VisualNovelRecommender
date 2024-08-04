@@ -22,7 +22,7 @@ const api = axios.create({
 //this is the function that calls the actual vndb api, it takes in a title and fields argument, the fields argument is what we want to get and title is what we give it
 //we send a post request to get the data
 //it uses the title to search for vn with the title through the filters and returns the data
-export const queryVisualNovelByTitle = async (title, fields) => {
+export const getnovel = async (title, fields) => {
     try {
       const response = await api.post('/vn', {
         filters: ["search", "=", title],
@@ -40,7 +40,6 @@ export const queryVisualNovelByTitle = async (title, fields) => {
     const [visualNovel, setVisualNovel] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [idata, setIddata] = useState("");
   
     useEffect(() => {
             //this funcion is called whenever VisualNovelSearch is called and it calls the function to get the api data
@@ -48,7 +47,7 @@ export const queryVisualNovelByTitle = async (title, fields) => {
         try {
           //these fields indicate our request to the API.
           const fields = "title,image.url,released,description,rating,image.thumbnail,id"; //these fields indicate our request to the API.
-          const data = await queryVisualNovelByTitle(title, fields);
+          const data = await getnovel(title, fields);
           //the api sends back an array of novels that match the title, so we check if the novel exists and we set it to the first in the array
           if (data.results.length > 0) {
                         //then we set our id to the id of the novel, this is the variable sent in by app.js to send back to the rust server
