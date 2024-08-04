@@ -10,7 +10,7 @@ NEEDED:
 <ol> </ol>
 
 - *React*
-<ol> Type `npm install react` into your terminal </ol>
+    > Type `npm install react` into your terminal
 
 ---
 **Steps**
