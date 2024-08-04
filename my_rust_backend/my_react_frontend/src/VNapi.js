@@ -48,11 +48,11 @@ export const getnovel = async (title, fields) => {
           //these fields indicate our request to the API.
           const fields = "title,image.url,released,description,rating,image.thumbnail,id"; //these fields indicate our request to the API.
           const data = await getnovel(title, fields);
-          //the api sends back an array of novels that match the title, so we check if the novel exists and we set it to the first in the array
+          //the api sends back an array of novels that match the title, so we check if the novel exists, and we set it to the first in the array
           if (data.results.length > 0) {
                         //then we set our id to the id of the novel, this is the variable sent in by app.js to send back to the rust server
-            setVisualNovel(data.results[0]); 
-            setId(data.results[0].id.toString());
+            setVisualNovel(data.results[data.results.length - 1]);
+            setId(data.results[data.results.length - 1].id.toString());
           } else {
              //these are errors if the post request fails
             setError('Visual novel not found');
@@ -87,7 +87,7 @@ export const getnovel = async (title, fields) => {
     }
     else{
       return(
-                   //render on screen the title, releasedate, rating, image and description just in a different format
+          //render on screen the title, releasedate, rating, image and description just in a different format
         <div>
           <h5>{visualNovel.title}</h5>
           <h5>date: {visualNovel.released}</h5>

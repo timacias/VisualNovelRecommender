@@ -174,7 +174,7 @@ function App() {
   };
 
   //this is the function to render the first list, we used this as a template https://react-window.vercel.app/#/examples/list/fixed-size
-  //we made it so it alternates in color between each novel and displays the name and first 3 tags
+  //we made it so that it alternates in color between each novel and displays the name and first 3 tags
   const Column1 = ({ index, style }) => (
     <div style={style}>
        <div className={index % 2 ? 'list1' : 'list2'}>
@@ -187,7 +187,7 @@ function App() {
     </div>
   );
     //this is the function to render the second list, we used this as a template https://react-window.vercel.app/#/examples/list/fixed-size
-  //we made it so it alternates in color between each novel and displays the name and first 3 tags
+  //we made it so that it alternates in color between each novel and displays the name and first 3 tags
   const Column2 = ({ index, style }) => (
     <div style={style}>
       <div className={index % 2 ? 'list1' : 'list2'}>
@@ -204,11 +204,13 @@ function App() {
 
   return (
     <div className="App">
-    <h5>Instructions: search a novel in our database</h5>
-    <h5>click the button in list for the novel you want, this is important because our algorithms are case sensitive</h5>
-    <h5>if you input novel wrong(case sensitive) it will break!!</h5>
-    <h5>click both check database buttons, then click send input, wait for a popup saying input is sent</h5>
-    <h5>then click get result</h5>
+    <h3>Instructions:</h3>
+    <h5>1. Search for a novel in our database using the bars under 'Choose a starting/ending novel!'</h5>
+    <h5>2. Click the button in the list for the novel you want. This is important due to case sensitivity.</h5>
+    <h5>3. Click the 'Check Database' buttons for both novels.</h5>
+    <h5>4. Click 'Send Input', wait for a popup saying that input has been sent.</h5>
+    <h5>5. Click `Get Results!'</h5>
+    <h5>Note: Use the checkbox above the 'Send Input' button to toggle pathfinding algorithms.</h5>
       <div class="flexbox-container">
         <div class="module">
           <h1>Choose a starting novel!</h1>
@@ -268,7 +270,7 @@ function App() {
         />
       </label>
       {/* if checked boolean is false display djikstras, if true bellmanford */}
-      <p>{checked ? "Bellmanford Search" : "Djikstra's Search"}</p>
+      <p>{checked ? "Bellman-Ford Pathfinding" : "Djikstra's Pathfinding"}</p>
       {/* render the send input and get results button */}
       <button onClick={handleSubmit}>Send Input</button>
       <button onClick={refreshPage}>Get Results!</button>
