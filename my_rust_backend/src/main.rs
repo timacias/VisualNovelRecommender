@@ -1,5 +1,5 @@
 // Create modules
-mod test;
+mod graph;
 mod csv_reader;
 
 // Import from crates
@@ -19,8 +19,8 @@ use tracing::{info, error, Level};
 
 // Import from modules
 use csv_reader::reading_csv;
-use test::Novel;
-use crate::test::{FindNovel, Graph};
+use graph::Novel;
+use crate::graph::{FindNovel, Graph};
 
 type SharedState = Arc<Mutex<AppState>>;
 

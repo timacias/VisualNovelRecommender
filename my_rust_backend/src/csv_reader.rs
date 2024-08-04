@@ -4,8 +4,8 @@ use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::mem::swap;
 use std::ops::Index;
-use crate::test;
-use test::Novel;
+use crate::graph;
+use graph::Novel;
 
 pub fn reading_csv() -> (Vec<Novel>, HashMap<String, u16>) {
     // Make vector of vn objects so that we can implement vn searching.
