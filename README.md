@@ -14,7 +14,8 @@ COP3530 Final Project
 ---
 **Steps**
 1. Open up terminal and go to “my_rust_backend”
-2. Run with `cargo run -- release`. Note this WILL take a long time as it is loading the database and calculating edge weights for every novel, approximately 10-20 minutes. Once you see “listening on 127.0.0.1” in your terminal, that means that the backend has created the graph and is ready for usage.
+2. Run with `cargo run --release`. Note this will take a long time as it is loading the database and calculating edge weights for every novel. Once you see “listening on 127.0.0.1” in your terminal, that means that the backend has created the graph and is ready for usage.
+	- To build a debug binary, use `cargo run`, this will be significantly slower.
 3. Open a new terminal and move to the “my_react_frontend” folder
 4. Type `PORT=3001 npm start` in the new terminal
 	- If this does not work, do `npm run build`
