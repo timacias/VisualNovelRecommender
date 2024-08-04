@@ -97,7 +97,7 @@ function App() {
   };
   //this is the check database button for the first novel, it checks if the user input is a valid novel title in our graph and if so sets the currentnovel1 to it
   const Novelsearch1 = () => {
-    const novelExists = Novel.some(novel => novel.title.toLowerCase() === input.toLowerCase());
+    const novelExists = Novel.some(novel => novel.title === input);
 
     if (!novelExists) {
       alert('Input is not a valid novel in our database');
@@ -108,7 +108,7 @@ function App() {
   };
 //this is the check database button for the second novel, it checks if the user input is a valid novel title in our graph and if so sets the currentnovel2 to it
   const Novelsearch2 = () => {
-    const novelExists = Novel2.some(novel => novel.title.toLowerCase() === input2.toLowerCase());
+    const novelExists = Novel2.some(novel => novel.title === input2);
 
     if (!novelExists) {
       alert('Input is not a valid novel in our database');
@@ -121,14 +121,14 @@ function App() {
   //this is the submit input button, it does another round of checking to see if the inputs are valid novels then does a post request which sends the input to the backend
   
   const handleSubmit = () => {
-    const novelExists = Novel.some(novel => novel.title.toLowerCase() === input.toLowerCase());
+    const novelExists = Novel.some(novel => novel.title === input);
 
     if (!novelExists) {
       alert('Input is not a valid novel in our database');
       return;
     }
 
-    const novelExists2 = Novel2.some(novel => novel.title.toLowerCase() === input2.toLowerCase());
+    const novelExists2 = Novel2.some(novel => novel.title === input2);
 
     if (!novelExists2) {
       alert('Input is not a valid novel in our database');

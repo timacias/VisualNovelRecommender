@@ -32,7 +32,7 @@ struct InputData {
     id2: String,
 }
 
-//this is a struct that hold everything
+//this is a struct that holds everything, the novels, the result of shortest path, the graph which calls the functions, and a hashmap to get id by title
 struct AppState {
     novels: Vec<Novel>,
     result: Vec<String>,
@@ -40,6 +40,8 @@ struct AppState {
     novel_graph: BTreeMap<u16, Vec<(u16, u16)>>
 }
 
+//this function recieves the input from the frontend, the appstate struct is passed into this so it can have access to the graph algorithms and put the shortest path into the result vector
+//it gets the data, clears the result vector, uses the algortihm depending on a boolean that the user checks and pushes the results and time into the result vector 
 async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<SharedState>) -> impl IntoResponse {
     println!("Received input: {}", data.input);
     println!("Received input: {}", data.input2);
@@ -107,6 +109,7 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
 
 }
 
+
 #[tokio::main]
 async fn main() {
     // Get a vector of ONLY SFW novels and a map of novel titles to their respective v_ids
@@ -120,33 +123,11 @@ async fn main() {
 
     let novel_graph = get_weights(&novels).await;
 
-    let dijkstra_path1 = novel_graph.dijkstra(&(19119u16), &(18160u16), novels.clone());
-    let bellman_path1 = novel_graph.bellman_ford(&(19119u16), &(18160u16), novels.clone());
-    // Fate/EXTELLA (v19119) being compared to Collar x Malice (v18160) -> NO PATH FOUND
 
-    let dijkstra_path2 = novel_graph.dijkstra(&(18160u16), &(14908u16), novels.clone());
-    let bellman_path2 = novel_graph.bellman_ford(&(18160u16), &(14908u16), novels.clone());
-    // Collar X Malice (v18160) being compared to Code:Realize (v14908) -> PATH FOUND
-
-    let dijkstra_path3 = novel_graph.dijkstra(&(4602u16), &(30175u16), novels.clone());
-    let bellman_path3 = novel_graph.bellman_ford(&(4602u16), &(30175u16), novels.clone());
-    // Utano Prince Sama being compared to B Project Ryuusei Fantasia
-
-    if dijkstra_path1 == bellman_path1 {
-        println!("PATH 1 IS THE SAME!!!! YAY");
-    }
-    if dijkstra_path2 == bellman_path2 {
-        println!("PATH 2 IS THE SAME!!!! YAY");
-    }
-    if dijkstra_path3 == bellman_path3 {
-        println!("PATH 3 IS THE SAME!!!! YAY");
-    }
-
-    // Initialize logging
+    // setup for frontend and backend and setup corsrequest which allows for data to be sent from any origin any method
     tracing_subscriber::fmt()
         .with_max_level(Level::INFO)
         .init();
-// CORS configuration to allow requests from any origin
     let cors = CorsLayer::new()
         .allow_origin(AllowOrigin::any())
         .allow_methods(AllowMethods::any())
@@ -154,16 +135,18 @@ async fn main() {
 
     // TODO: Tim: I changed the attributes of the Novel struct
     //         try using novels : Vec<Novel> instead.
-    // Shared state with initial data
+
+    // Shared state with initial data it initializes and holds the novels, graphs, and results
     let shared_state = Arc::new(Mutex::new(AppState{novels,result: vec![],titletoid: titles_to_ids ,novel_graph,}));
 
-
+    //initialize the result vector to make sure its empty and default is 0 for time 
     clearresult(&shared_state);
     addresult(&shared_state, "0".to_string());
 
-                                          
+                
 
-    // Define routes and apply middleware
+    // Define routes for the backend server and functions. get requests send data to frontend, post requests get data from frontend. they each call a function
+    //for what to do. This sets up the backend rust server on localhost 3000
     let app = Router::new()
         .route("/", get(root))
         .route("/people", get(get_people))
@@ -174,35 +157,39 @@ async fn main() {
     
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     println!("listening on {}", addr);
-
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
         .unwrap();
 }
+
 async fn root() -> &'static str {
     "Hello World"
 }
+//add to result vector called from addresult
 fn resultadd(state: &mut AppState, entry: String) {
     state.result.push(entry);
 }
 
+//clear result vector called from clearresult 
 fn resultclear(state: &mut AppState) {
     state.result.clear();
 }
 
+//clear result vector
 fn clearresult(shared_state: &SharedState) {
     let mut state = shared_state.lock().unwrap();
     resultclear(&mut state);
 }
 
+//add to result vector
 fn addresult(shared_state: &SharedState, entry: String) {
     let mut state = shared_state.lock().unwrap();
     resultadd(&mut state, entry);
 }
 
 
-
+//send the results after calculations from the algorithms to the frontend, it has the state with all the vectors and sends it to the frontend as a response
 async fn get_result(
     Extension(state): Extension<SharedState>,) -> impl IntoResponse {
     match state.lock() {
@@ -216,7 +203,7 @@ async fn get_result(
         }
     }
 }
-
+//send the initial vector with all the novels in our graph to the frontend, it is then displayed as the lists
 async fn get_people(
     Extension(state): Extension<SharedState>,) -> impl IntoResponse {
     match state.lock() {
