@@ -29,12 +29,6 @@ The database is from June 24th, 2024. Details of the novels such as tags are add
 
 Any novel with a tag categorized as ‘ero’ was classified as NSFW.
 
-Some images/titles that are displayed may not be correct, but it is due to inconsistencies within the Visual Novel API's own search function.
-- For example, inputting Fate/Extra CCC returns from the API and displays its prequel Fate/Extra but our backend is working with Fate/Extra CCC.
-- These titles are usually a part of the same series. Our database and algorithms find the novels that the user has inputted correctly.
-
-Please avoid using novels of the same series or novels very similar to each other as they might just return a path with just the two novels.
-
 Our program only displays the top 3 tags in a novel for visual clarity, but we use all of a novel's tags in our weight and path-finding calculations.
 
 Graph edges are based on similarity score (see 'Extra Details'). An edge will only be created in the graph of novels if a certain similarity percentage is met.
