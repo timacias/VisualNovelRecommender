@@ -154,14 +154,16 @@ impl Graph for BTreeMap<u16, Vec<(u16, u16)>> { // TODO: Figure out when to stop
                 path.push(*current_id);
             }
         }
-
-        path.reverse();
         (path, start_time.elapsed().as_secs_f64())
     }
 
     fn bellman_ford(&self, source : &u16, terminal : &u16, novels : Vec<Novel>) -> (Vec<u16>, f64) {
         let start_time = Instant::now();
         let mut path: Vec<u16> = Vec::new();
+        if self[source].is_empty() || self[terminal].is_empty(){
+            println!("EITHER SOURCE OR TERMINAL NOVEL HAS NO EDGE");
+            return (path, start_time.elapsed().as_secs_f64()); // Returns an empty if the node is isolated.
+        }
         let mut distance: Vec<i32> = vec![99999; novels.len()]; // Distance
         let mut previous: Vec<u16> = vec![0; novels.len()]; // Previous id's. Default set to 0 because no V0 exists
 
@@ -198,8 +200,6 @@ impl Graph for BTreeMap<u16, Vec<(u16, u16)>> { // TODO: Figure out when to stop
                 path.push(*current_id);
             }
         }
-
-        path.reverse();
         (path, start_time.elapsed().as_secs_f64())
     }
 

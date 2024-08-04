@@ -10,18 +10,18 @@ NEEDED:
 <ol> </ol>
 
 - *React*
-<ol> Type **npm install react** into your terminal </ol>
+<ol> Type `npm install react` into your terminal </ol>
 
 ---
 **Steps**
 <ol>
     <li> Open up terminal and go to “my_rust_backend” </li>
-    <li> Run with **cargo run**. Note this WILL take a long time as it is loading the database and calculating edge weights for every novel, approximately 10-20 minutes. Once you see “listening on 127.0.0.1” in your terminal, that means that the backend has created the graph and is ready for usage. </li>
+    <li> Run with `cargo run`. Note this WILL take a long time as it is loading the database and calculating edge weights for every novel, approximately 10-20 minutes. Once you see “listening on 127.0.0.1” in your terminal, that means that the backend has created the graph and is ready for usage. </li>
     <li> Open a new terminal and move to the “my_react_frontend” folder </li>
-    <li>Type **PORT=3001** npm start in the new terminal
+    <li>Type `PORT=3001 npm start` in the new terminal
         <ol>
-          <li> If this does not work, do **npm run build** </li>
-          <li> Then **serve -s build** </li>
+          <li> If this does not work, do `npm run build` </li>
+          <li> Then `serve -s build` </li>
         </ol>
     </li>
 </ol>
