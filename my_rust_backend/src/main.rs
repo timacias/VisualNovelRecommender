@@ -1,6 +1,8 @@
 mod test;
 mod csv_reader;
 use std::collections::{BTreeMap, HashMap};
+use std::env::var_os;
+use std::mem::forget;
 use axum::{
     extract::{Json, Extension},
     response::IntoResponse,
@@ -54,32 +56,7 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
 
     println!("test");
     state.result.clear();
-   
-   //this was old method of getting the id, id was passed in from frontend through api, now we get it from backend 
-    // state.result.push(data.input.clone());
-    // state.result.push(data.input2.clone());
-    // state.result.push(data.checked.to_string());
 
-    // let novelid1 = &data.id1[1..].to_string();
-    // let novelid2 = &data.id2[1..].to_string();
-    // let intnovelid1: u16 = match novelid1.parse() {
-    //     Ok(num) => num,
-    //     Err(e) => {
-    //         println!("Error parsing novelid1: {}", e);
-    //         return (StatusCode::BAD_REQUEST, "Invalid id1 format").into_response();
-    //     }
-    // };
-    // let intnovelid2: u16 = match novelid2.parse() {
-    //     Ok(num) => num,
-    //     Err(e) => {
-    //         println!("Error parsing novelid2: {}", e);
-    //         return (StatusCode::BAD_REQUEST, "Invalid id2 format").into_response();
-    //     }
-    // };
-    // println!("{}", intnovelid1);
-    // println!("{}", intnovelid2);
-   
-    state.result.clear();
 
     if !data.checked {
         let (dijkstra_path2,djistratime) = state.novel_graph.dijkstra(&(state.titletoid.get(&data.input).unwrap()), &( state.titletoid.get(&data.input2).unwrap()), state.novels.clone());
@@ -123,7 +100,6 @@ async fn main() {
 
     let novel_graph = get_weights(&novels).await;
 
-
     // setup for frontend and backend and setup corsrequest which allows for data to be sent from any origin any method
     tracing_subscriber::fmt()
         .with_max_level(Level::INFO)
@@ -142,8 +118,6 @@ async fn main() {
     //initialize the result vector to make sure its empty and default is 0 for time 
     clearresult(&shared_state);
     addresult(&shared_state, "0".to_string());
-
-                
 
     // Define routes for the backend server and functions. get requests send data to frontend, post requests get data from frontend. they each call a function
     //for what to do. This sets up the backend rust server on localhost 3000
@@ -223,6 +197,8 @@ async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u16)>> {
     let mut graph= BTreeMap::new();
 
     for from_index in 0..novels.len() {
+        // Comment this out if you think this is causing the program to take longer to finish.
+        println!("{}: {}", novels[from_index].v_id, novels[from_index].title);
         for to_index in from_index + 1..novels.len() {
             let from_id = novels[from_index].v_id;
             let to_id = novels[to_index].v_id;
@@ -245,32 +221,3 @@ async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u16)>> {
     }
     graph
 }
-
-//this was our old method to calculate weights it took longer to calulate
-
-// async fn get_weights(novels: &Vec<Novel>) -> BTreeMap<u16, Vec<(u16, u16)>> {
-//      let mut graph: BTreeMap<u16, Vec<(u16,u16)>> = BTreeMap::new();
-//      let mut num_edges: u32 = 0;
-//      for from in 0..novels.len(){ // Comparing 'from' novel to every other novel after it.
-//          println!("{}, {}", novels[from].title, novels[from].v_id);
-//          let curr_num_edge = num_edges;
-//          let mut weights: Vec<(u16, u16)> = vec![];
-//          for to in 0..novels.len(){
-//              if to != from {
-//                  let similarity: u16 = novels[from].comparing(&novels[to]);
-//
-//                  if similarity > 0  && similarity < 70 {
-//                      weights.push((novels[to].v_id, similarity));
-//                      num_edges += 1;
-//                  }
-//              }
-//          }
-//          if num_edges - curr_num_edge == 0 {
-//              println!("NO EDGED ADDED")
-//          }
-//          graph.insert(novels[from].v_id, weights.clone());
-//          println!();
-//      }
-//     println!("NUM EDGES: {}", num_edges);
-//     graph
-// }

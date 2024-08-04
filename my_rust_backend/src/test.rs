@@ -27,10 +27,13 @@ impl Display for Novel {
 impl Novel {
     // The closer to 1 is the more similarities there are
     pub fn comparing(&self, other_novel: &Novel) -> u16 {
+        // Finds the cardinality of the intersection of the same attribute set. Adds this to intersection_index
         let mut intersection_index: f32 = self.seiyuu.intersection(&other_novel.seiyuu).count() as f32;
         intersection_index += self.tag_cont.intersection(&other_novel.tag_cont).count() as f32;
         intersection_index += self.staff.intersection(&other_novel.staff).count() as f32;
 
+        // In order to keep consistency between novels, we've decided to take the percentage
+        // with respect with the smallest length of each attribute.
         let mut smallest_sizes: f32 = 0.0;
         if self.seiyuu.len() < other_novel.seiyuu.len() {
             smallest_sizes += self.seiyuu.len() as f32;
@@ -56,7 +59,10 @@ impl Novel {
         if smallest_sizes == 0.0 {
             return 0;
         }
-        // (smallest_sizes/intersection_index) as u16
+
+        // To get the amount of work required for shortest path
+        // because we want novels that are similar to each other:
+        // 100 - (similarity percentage)
         (100.0 - ((intersection_index/smallest_sizes) * 100.0)) as u16
     }
 }
@@ -68,6 +74,7 @@ pub trait FindNovel {
 
 // Binary Search to find index of novel dependent on vector.
 impl FindNovel for Vec<Novel> {
+    // Uses binary search to find the index of novel with id vid in a vector Novels
     fn find_novel(&self, vid: &u16) -> usize {
         let mut low = 0;
         let mut high = self.len();
@@ -85,15 +92,6 @@ impl FindNovel for Vec<Novel> {
         }
         99999 // This instead of -1 for id not found.
     }
-
-    // fn find_novel_title(&self, title: String) -> usize {
-    //     for i in 0..self.len(){
-    //         if title == self[i].title {
-    //             return i;
-    //         }
-    //     }
-    //     99999
-    // }
 }
 
 pub trait Graph {
@@ -138,8 +136,6 @@ impl Graph for BTreeMap<u16, Vec<(u16, u16)>> { // TODO: Figure out when to stop
                     current_id = &novels[i].v_id;
                 }
             }
-            // println!("{}: {}", novels[novels.find_novel(current_id)].v_id, novels[novels.find_novel(current_id)].title);
-            // println!("Smallest Weight: {}\n", smallest_weight);
 
             // If no change has occurred, the terminal vertex is disconnected from source and hence no path exists.
             if s.contains(current_id){
@@ -148,18 +144,18 @@ impl Graph for BTreeMap<u16, Vec<(u16, u16)>> { // TODO: Figure out when to stop
             s.insert(current_id.clone());
         }
 
+        // Find the path from terminal to source
         current_id = terminal;
         path.push(*terminal);
         println!("Distance Needed: {}", distance[novels.find_novel(current_id)]);
         if s.contains(terminal) && s.contains(source){
             while current_id != source {
-                // println!("{}: {}", novels[novels.find_novel(current_id)].v_id, novels[novels.find_novel(current_id)].title);
-                // println!("Distance: {}\n", distance[novels.find_novel(current_id)]);
                 current_id = &previous[novels.find_novel(current_id)];
                 path.push(*current_id);
             }
         }
 
+        path.reverse();
         (path, start_time.elapsed().as_secs_f64())
     }
 
@@ -170,13 +166,14 @@ impl Graph for BTreeMap<u16, Vec<(u16, u16)>> { // TODO: Figure out when to stop
         let mut previous: Vec<u16> = vec![0; novels.len()]; // Previous id's. Default set to 0 because no V0 exists
 
         distance[novels.find_novel(source)] = 0;
-        for _iterations_needed in 0..novels.len(){ // Number of iterations needed for Bellman-Ford
+        for _iterations_needed in 0..novels.len(){ // Number of iterations needed for Bellman-Ford to guarantee the shortest path
             let mut changed_made = false;
-            for node in 0..novels.len(){
+            for node in 0..novels.len(){ // Each iteration request every node in a graph to be visited.
                 let edge_list = self[&novels[node].v_id].clone();
-                for edge in edge_list{
+                for edge in edge_list{ // For every node, every edge in an edge list much be checked
                     if edge.0 != *source &&
                         distance[novels.find_novel(&edge.0)] > (distance[node] + i32::from(edge.1)){
+                        // As long as the edge it's direct to isn't the source and the weight of the new path is cheaper than originally, relax that vertex
 
                         distance[novels.find_novel(&edge.0)] = distance[node] + i32::from(edge.1);
                         previous[novels.find_novel(&edge.0)] = novels[node].v_id.clone();
@@ -184,23 +181,25 @@ impl Graph for BTreeMap<u16, Vec<(u16, u16)>> { // TODO: Figure out when to stop
                     }
                 }
             }
+            // If no changes have been made by the end of the iteration, Bellman-Ford is said to be completed
+            // earlier than usual
             if !changed_made{
                 break;
             }
         }
 
+        // Finds the path starting from terminal to source
         let mut current_id = terminal;
         path.push(*terminal);
         println!("Distance Needed: {}", distance[novels.find_novel(current_id)]);
         if distance[novels.find_novel(terminal)] != 99999 && distance[novels.find_novel(source)] != 99999{
             while current_id != source  && distance[novels.find_novel(current_id)] != 99999{
-                // println!("{}: {}", novels[novels.find_novel(current_id)].v_id, novels[novels.find_novel(current_id)].title);
-                // println!("Distance: {}\n", distance[novels.find_novel(current_id)]);
                 current_id = &previous[novels.find_novel(current_id)];
                 path.push(*current_id);
             }
         }
 
+        path.reverse();
         (path, start_time.elapsed().as_secs_f64())
     }
 
