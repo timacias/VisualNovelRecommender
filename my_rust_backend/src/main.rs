@@ -1,8 +1,6 @@
 mod test;
 mod csv_reader;
 use std::collections::{BTreeMap, HashMap};
-use std::env::var_os;
-use std::mem::forget;
 use axum::{
     extract::{Json, Extension},
     response::IntoResponse,
