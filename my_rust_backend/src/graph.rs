@@ -152,6 +152,7 @@ impl Graph for BTreeMap<u16, Vec<(u16, u16)>> { // TODO: Figure out when to stop
                 path.push(*current_id);
             }
         }
+        path.reverse();
         (path, start_time.elapsed().as_secs_f64())
     }
 
@@ -198,6 +199,7 @@ impl Graph for BTreeMap<u16, Vec<(u16, u16)>> { // TODO: Figure out when to stop
                 path.push(*current_id);
             }
         }
+        path.reverse();
         (path, start_time.elapsed().as_secs_f64())
     }
 }

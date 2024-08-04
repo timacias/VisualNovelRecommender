@@ -35,40 +35,54 @@ export const getnovel = async (title, fields) => {
     }
   };
     //this is the function that we call from our app.js it calls the function above to get the info
-  const VisualNovelSearch = ({ title, check, id, setId }) => {
-        //these are variables, we use them to set the visualnovel after we get it
-    const [visualNovel, setVisualNovel] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-  
-    useEffect(() => {
-            //this funcion is called whenever VisualNovelSearch is called and it calls the function to get the api data
-      const fetchData = async () => {
-        try {
-          //these fields indicate our request to the API.
-          const fields = "title,image.url,released,description,rating,image.thumbnail,id"; //these fields indicate our request to the API.
-          const data = await getnovel(title, fields);
-          //the api sends back an array of novels that match the title, so we check if the novel exists, and we set it to the first in the array
-          if (data.results.length > 0) {
-                        //then we set our id to the id of the novel, this is the variable sent in by app.js to send back to the rust server
-            setVisualNovel(data.results[data.results.length - 1]);
-            setId(data.results[data.results.length - 1].id.toString());
-          } else {
-             //these are errors if the post request fails
-            setError('Visual novel not found');
+const VisualNovelSearch = ({ title, check, id}) => {
+  //these are variables, we use them to set the visualnovel after we get it
+  const [visualNovel, setVisualNovel] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [test, setTest] = useState("test");
+
+
+  useEffect(() => {
+    //this funcion is called whenever VisualNovelSearch is called and it calls the function to get the api data
+    const fetchData = async () => {
+      try {
+        //these fields indicate our request to the API.
+        const fields = "title,image.url,released,description,rating,image.thumbnail,id"; //these fields indicate our request to the API.
+        const data = await getnovel(title, fields);
+        //the api sends back an array of novels that match the title, so we check if the novel exists and we set it to the first in the array
+        if (data.results.length > 0) {
+          //then we set our id to the id of the novel, this is the variable sent in by app.js to send back to the rust server
+          setVisualNovel(data.results[0]);
+
+          for (let i = 0; i < data.results.length; i++) {
+
+            setTest(data.results[i].id.toString().substring(1));
+
+            if(test.localeCompare(id) == 0 || title.localeCompare(data.results[i].title) == 0){
+
+              setVisualNovel(data.results[i]);
+
+            }
           }
-          setLoading(false);
-        } catch (err) {
-          setError(err.message);
-          setLoading(false);
+
+
+        } else {
+          //these are errors if the post request fails
+          setError('Visual novel not found');
         }
-      };
-      
-      fetchData();
-    }, [title]);
-     //these are errors if the post request fails
-    if (loading) return <p>Loading...</p>;
-    if (error) return <p>Error: {error}</p>;
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [title]);
+  //these are errors if the post request fails
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error}</p>;
     if(check){
       return (
                 //render on screen the title, releasedate, rating, image and description
