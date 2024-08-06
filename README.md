@@ -20,8 +20,9 @@ COP3530 Final Project
 3. Run with `cargo run --release`. This will take a long time as it is loading the database and calculating edge weights for every novel. Once you see “listening on 127.0.0.1” in your terminal, that means that the backend has created the graph and is ready for usage.
 	- To build a debug binary, use `cargo run`, this will be significantly slower.
 4. Open a new terminal and move to the “my_react_frontend” folder
-5. Type `PORT=3001 npm start` in the new terminal
-	- If this does not work, do `npm run build`
+5. Type `PORT=3001 npm start` in the new terminal (ensure `react` has been installed via npm)
+	- If this does not work, try making a production build with `npm run build`
+ 		- If `serve` is not installed, type `npm install -g serve`
 	- Then `serve -s build`
 
 ---
