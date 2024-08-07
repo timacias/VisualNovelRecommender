@@ -16,14 +16,18 @@ COP3530 Final Project
 **Steps**
 1. Clone this repo locally
 	- If you have `git` installed, run `git clone https://github.com/timacias/VisualNovelRecommender` in your terminal
-2. Open up your terminal and go to “my_rust_backend”
-3. Run with `cargo run --release`. This will take a long time as it is loading the database and calculating edge weights for every novel. Once you see “listening on 127.0.0.1” in your terminal, that means that the backend has created the graph and is ready for usage.
+2. Open up your terminal and go to the “my_rust_backend” folder
+3. Run with `cargo run --release`. This will take a bit. Once you see “listening on 127.0.0.1” in your terminal, that means that the backend has created the graph and is ready for usage.
 	- To build a debug binary, use `cargo run`, this will be significantly slower.
-4. Open a new terminal and move to the “my_react_frontend” folder
-5. Type `PORT=3001 npm start` in the new terminal (ensure `react` has been installed via npm)
-	- If this does not work, try making a production build with `npm run build`
- 		- If `serve` is not installed, type `npm install -g serve`
-	- Then `serve -s build`
+4. Open a new terminal and move to “my_react_frontend” (this folder is within "my_rust_backend")
+5. Ensure `react` has been installed via npm
+	- If using a Unix shell, type `PORT=3001 npm start`
+ 	- If using a Windows shell, type `npm run build`
+		- If `serve` is not installed, type `npm install -g serve`
+		- Then `serve -s build`
+
+- Note: `npm start` creates a debug build, `npm run build` creates a release build
+	- On Unix shells, a release build of the frontend can be created by following the Windows instructions
 
 ---
 ## Disclaimers
