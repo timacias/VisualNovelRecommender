@@ -51,3 +51,8 @@ On some very rare occasions, the Dijkstra and Bellman-Ford algorithms will resul
 Weight Calculations:
 - Each novel has three attributes which are sets: staff, seiyuu (voice actor), and tags. When compared to another novel, the cardinality of the intersection of each set is found and added to an “intersection_index”. Afterward, each attribute is compared to find which set is smaller and is added to “smallest_sizes”. This is so we can get a percentage of similarities found within the limitations of the variation between the size of each attribute’s set.
 - We find the percentage similarity by doing intersection_index/smallest_sizes * 100.0. Finally, since we are doing the shortest path algorithms, we have to subtract the percentage by 100 so that in these algorithms, the more similar novels are considered before others.
+
+---
+
+## Legal
+This program is released under the GNU Affero General Public License, version 3 or later.
