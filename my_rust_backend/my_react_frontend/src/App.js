@@ -211,6 +211,7 @@ function App() {
     <h5>4. Click 'Send Input', wait for a popup saying that input has been sent.</h5>
     <h5>5. Click `Get Results!'</h5>
     <h5>Note: Use the checkbox above the 'Send Input' button to toggle pathfinding algorithms.</h5>
+    <h5>A copy of this program's source code can be found at https://github.com/timacias/VisualNovelRecommender</h5>
       <div class="flexbox-container">
         <div class="module">
           <h1>Choose a starting novel!</h1>
