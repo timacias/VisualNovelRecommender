@@ -83,6 +83,9 @@ async fn handle_input(Json(data): Json<InputData>, Extension(state): Extension<S
 
 #[tokio::main]
 async fn main() {
+    // AGPL compliance
+    println!("A copy of this program's source code can be found at https://github.com/timacias/VisualNovelRecommender");
+    
     // Get a vector of ONLY SFW novels and a map of novel titles to their respective v_ids
     let (novels, titles_to_ids) = reading_csv();
 
