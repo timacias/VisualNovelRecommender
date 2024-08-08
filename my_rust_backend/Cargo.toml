@@ -1,8 +1,13 @@
 [package]
 name = "my_rust_backend"
 version = "1.0.0"
+authors = ["Sarah Tran", "Justin Ming", "Timothy Macias"]
 edition = "2021"
-documentation = "https://github.com/timacias/VisualNovelRecommender"
+description = "Uses VNDB to create a weighted graph of (mostly) SFW novels"
+readme = ../README.md
+repository = "https://github.com/timacias/VisualNovelRecommender"
+license = AGPL-3.0-or-later
+license-file = ../LICENSE
 
 [dependencies]
 axum = "0.5.16"
